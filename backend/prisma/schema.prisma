@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  passwordHash  String
+  status        String   @default("active") // active, inactive
+  role          String   @default("USER")   // ADMIN, USER
+  plan          String   @default("free")   // free, pro, enterprise
+  webhookToken  String   @unique @default(uuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  botConfig      BotConfig?
+  whatsappInstance WhatsAppInstance?
+  chatSessions   ChatSession[]
+  messageLogs    MessageLog[]
+}
+
+model MessageLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  direction String   // in, out
+  type      String   // text, image, etc.
+  createdAt DateTime @default(now())
+}
+
+model BotConfig {
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  botType            String?  // dialogflow, typebot
+  
+  // Dialogflow
+  dialogflowProjectId String?
+  dialogflowJson     String?  // Criptografado
+  dialogflowLang     String   @default("pt-BR")
+  
+  // Typebot
+  typebotId          String?
+  typebotToken       String?  // Criptografado
+  
+  updatedAt          DateTime @updatedAt
+}
+
+model WhatsAppInstance {
+  id         String   @id @default(uuid())
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  provider   String   // evolution, uazapi
+  baseUrl    String
+  token      String   // Criptografado
+  instanceId String
+  status     String   @default("disconnected") // connected, disconnected
+  
+  updatedAt  DateTime @updatedAt
+}
+
+model ChatSession {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  remoteJid      String
+  botSessionId   String?  // Para Typebot ou Dialogflow
+  lastInteraction DateTime @default(now())
+
+  @@unique([userId, remoteJid])
+}

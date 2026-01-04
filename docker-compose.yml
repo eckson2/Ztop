@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=botsaas
+      - POSTGRES_PASSWORD=botsaas
+      - POSTGRES_DB=botsaas
+    volumes:
+      - botsaas_db:/var/lib/postgresql/data
+    networks:
+      - topnet
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  backend:
+    image: node:18-bullseye
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+    command: sh -c "npm install && npx prisma db push && npx prisma db seed && npm start"
+    environment:
+      - DATABASE_URL=postgresql://botsaas:botsaas@postgres:5432/botsaas
+      - JWT_SECRET=${JWT_SECRET}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - PORT=3000
+      - EVOLUTION_URL=${EVOLUTION_URL}
+      - EVOLUTION_API_KEY=${EVOLUTION_API_KEY}
+      - UAZ_URL=${UAZ_URL}
+      - UAZ_ADMIN_TOKEN=${UAZ_ADMIN_TOKEN}
+      - FRONTEND_URL=https://front.ztop.dev.br
+    depends_on:
+      - postgres
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.dialogbot-back-secure.rule=Host(`back.ztop.dev.br`)"
+        - "traefik.http.routers.dialogbot-back-secure.entrypoints=websecure"
+        - "traefik.http.routers.dialogbot-back-secure.tls=true"
+        - "traefik.http.routers.dialogbot-back-secure.tls.certresolver=letsencryptresolver"
+        - "traefik.http.services.dialogbot-back.loadbalancer.server.port=3000"
+    networks:
+      - topnet
+
+  frontend:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    environment:
+      - VITE_API_URL=https://back.ztop.dev.br/api
+    command: sh -c "npm install && npm run build && npx serve -s dist -p 80"
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.dialogbot-front-secure.rule=Host(`front.ztop.dev.br`)"
+        - "traefik.http.routers.dialogbot-front-secure.entrypoints=websecure"
+        - "traefik.http.routers.dialogbot-front-secure.tls=true"
+        - "traefik.http.routers.dialogbot-front-secure.tls.certresolver=letsencryptresolver"
+        - "traefik.http.services.dialogbot-front.loadbalancer.server.port=80"
+    networks:
+      - topnet
+
+volumes:
+  botsaas_db:
+
+networks:
+  topnet:
+    external: true
