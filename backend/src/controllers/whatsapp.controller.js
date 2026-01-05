@@ -110,4 +110,27 @@ const getConnectQR = async (req, res) => {
     }
 };
 
-module.exports = { getInstance, saveInstance, getConnectQR };
+const configureWebhook = async (req, res) => {
+    try {
+        const instance = await prisma.whatsAppInstance.findUnique({
+            where: { userId: req.userId }
+        });
+
+        if (!instance) return res.status(404).json({ error: 'Instância não encontrada' });
+
+        const user = await prisma.user.findUnique({ where: { id: req.userId } });
+        if (!user || !user.webhookToken) return res.status(400).json({ error: 'Usuário sem token de webhook' });
+
+        const backendUrl = process.env.BACKEND_URL || 'https://back.ztop.dev.br';
+        const webhookUrl = `${backendUrl}/api/webhook/whatsapp/${user.id}?token=${user.webhookToken}`;
+
+        console.log(`[MANUAL WEBHOOK] Setting to: ${webhookUrl}`);
+        const result = await WhatsAppService.setWebhook(instance, webhookUrl);
+
+        res.json({ success: result, webhookUrl });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+module.exports = { getInstance, saveInstance, getConnectQR, configureWebhook };

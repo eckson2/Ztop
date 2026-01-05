@@ -6,5 +6,6 @@ const authMiddleware = require('../middleware/auth');
 router.get('/', authMiddleware, whatsappController.getInstance);
 router.post('/', authMiddleware, whatsappController.saveInstance);
 router.get('/qr', authMiddleware, whatsappController.getConnectQR);
+router.post('/webhook', authMiddleware, whatsappController.configureWebhook); // Manual trigger
 
 module.exports = router;
