@@ -14,22 +14,54 @@ class WhatsAppService {
             console.log(`[DEBUG] Setting Webhook for ${instance.instanceId} to ${webhookUrl}`);
 
             if (instance.provider === 'uazapi') {
-                // Try common UazAPI webhook endpoints
-                try {
-                    await axios.post(`${baseUrl}/webhook/set/${instance.instanceId}`, {
-                        webhookUrl: webhookUrl,
-                        enabled: enabled,
-                        webhookByEvents: false,
-                        events: ['MESSAGES_UPSERT', 'MESSAGES_UPDATE', 'SEND_MESSAGE']
-                    }, { headers });
-                } catch (e) {
-                    // Fallback for some versions
-                    await axios.post(`${baseUrl}/instance/webhook`, {
-                        instanceId: instance.instanceId,
-                        webhookUrl: webhookUrl,
-                        enabled: enabled
-                    }, { headers });
+                // Try UazAPI endpoints sequentially
+                let success = false;
+
+                // Attempt 1: POST /webhook/set (v2)
+                if (!success) {
+                    try {
+                        console.log(`[DEBUG] Trying POST /webhook/set/${instance.instanceId}`);
+                        await axios.post(`${baseUrl}/webhook/set/${instance.instanceId}`, {
+                            webhookUrl: webhookUrl,
+                            enabled: enabled,
+                            webhookByEvents: false,
+                            events: ['MESSAGES_UPSERT']
+                        }, { headers });
+                        success = true;
+                    } catch (e) {
+                        console.log(`[DEBUG] POST /webhook/set failed: ${e.response?.status}`);
+                    }
                 }
+
+                // Attempt 2: PUT /webhook/set (Some versions use PUT)
+                if (!success) {
+                    try {
+                        console.log(`[DEBUG] Trying PUT /webhook/set/${instance.instanceId}`);
+                        await axios.put(`${baseUrl}/webhook/set/${instance.instanceId}`, {
+                            webhookUrl: webhookUrl,
+                            enabled: enabled
+                        }, { headers });
+                        success = true;
+                    } catch (e) {
+                        console.log(`[DEBUG] PUT /webhook/set failed: ${e.response?.status}`);
+                    }
+                }
+
+                // Attempt 3: POST /webhook (v1 legacy)
+                if (!success) {
+                    try {
+                        console.log(`[DEBUG] Trying POST /webhook`);
+                        await axios.post(`${baseUrl}/webhook`, {
+                            webhookUrl: webhookUrl,
+                            enabled: enabled
+                        }, { headers });
+                        success = true;
+                    } catch (e) {
+                        console.log(`[DEBUG] POST /webhook failed: ${e.response?.status}`);
+                    }
+                }
+
+                if (!success) throw new Error('Todas as tentativas de configurar webhook falharam');
             } else {
                 // Evolution
                 await axios.post(`${baseUrl}/webhook/set/${instance.instanceId}`, {
