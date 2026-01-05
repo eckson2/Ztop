@@ -5,7 +5,7 @@ const WhatsAppService = require('../services/whatsapp.service');
 
 const getInstance = async (req, res) => {
     try {
-        const instance = await prisma.whatsappInstance.findUnique({
+        const instance = await prisma.whatsAppInstance.findUnique({
             where: { userId: req.userId }
         });
 
@@ -55,7 +55,7 @@ const saveInstance = async (req, res) => {
             data.token = encrypt(provisioned.token);
         }
 
-        const instance = await prisma.whatsappInstance.upsert({
+        const instance = await prisma.whatsAppInstance.upsert({
             where: { userId: req.userId },
             update: data,
             create: { ...data, userId: req.userId }
@@ -73,7 +73,7 @@ const saveInstance = async (req, res) => {
 
 const getConnectQR = async (req, res) => {
     try {
-        const instance = await prisma.whatsappInstance.findUnique({
+        const instance = await prisma.whatsAppInstance.findUnique({
             where: { userId: req.userId }
         });
 
