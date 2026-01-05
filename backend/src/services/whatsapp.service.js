@@ -185,6 +185,8 @@ class WhatsAppService {
             const baseUrl = instance.baseUrl.replace(/\/$/, '');
             const axiosConfig = { timeout: 5000 };
 
+            console.log(`[DEBUG] Checking Status for ${instance.instanceId}`); // <--- Log start
+
             const endpoints = [
                 `/instance/connectionState/${instance.instanceId}`,
                 `/instance/status/${instance.instanceId}`,
@@ -193,10 +195,13 @@ class WhatsAppService {
 
             for (const endpoint of endpoints) {
                 try {
+                    // console.log(`[DEBUG] Probing Status: ${endpoint}`);
                     const response = await axios.get(`${baseUrl}${endpoint}`, {
                         headers: { 'token': token, 'apikey': token },
                         ...axiosConfig
                     });
+
+                    console.log(`[DEBUG] Status Response (${endpoint}):`, JSON.stringify(response.data)); // <--- Log response
 
                     // Normalize status
                     const state = response.data.instance?.state || response.data.state || response.data.status;
@@ -205,10 +210,13 @@ class WhatsAppService {
                     if (state === 'connecting') return 'connecting';
 
                     if (response.data.instance?.status) return response.data.instance.status;
-                } catch (e) { }
+                } catch (e) {
+                    console.log(`[DEBUG] Status Probe Failed (${endpoint}): ${e.response?.status || e.message}`);
+                }
             }
             return 'disconnected';
         } catch (error) {
+            console.error('[DEBUG] getStatus critical error:', error.message);
             return 'disconnected';
         }
     }
