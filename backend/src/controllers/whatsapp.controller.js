@@ -132,4 +132,25 @@ const configureWebhook = async (req, res) => {
     }
 };
 
-module.exports = { getInstance, saveInstance, getConnectQR, configureWebhook };
+const deleteInstance = async (req, res) => {
+    try {
+        const instance = await prisma.whatsAppInstance.findUnique({
+            where: { userId: req.userId }
+        });
+
+        if (instance) {
+            // Optional: Try to delete from provider (fire and forget)
+            // try { await WhatsAppService.deleteInstance(instance); } catch (e) {}
+
+            await prisma.whatsAppInstance.delete({
+                where: { userId: req.userId }
+            });
+        }
+
+        res.json({ message: 'Instância removida com sucesso' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+module.exports = { getInstance, saveInstance, getConnectQR, configureWebhook, deleteInstance };
