@@ -47,6 +47,7 @@ class WhatsAppService {
         }
     }
 
+
     /**
      * Sends a text message through the configured provider
      */
