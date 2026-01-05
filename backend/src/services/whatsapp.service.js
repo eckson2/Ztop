@@ -121,29 +121,36 @@ class WhatsAppService {
 
             // List of potential endpoints to try
             const endpoints = [
-                `/instance/connect/${instance.instanceId}`,
-                `/instance/qr-base64`,  // Some versions use query param or header context
-                `/instance/qr-base64/${instance.instanceId}`,
-                `/message/qrCode/${instance.instanceId}` // Another variation
+                { method: 'GET', url: `/instance/connect/${instance.instanceId}` },
+                { method: 'GET', url: `/instance/qr-base64` },
+                { method: 'GET', url: `/instance/qr-base64/${instance.instanceId}` },
+                { method: 'GET', url: `/message/qrCode/${instance.instanceId}` },
+                { method: 'GET', url: `/instance/qrcode/${instance.instanceId}` }, // Evolution v1.6 style
+                { method: 'POST', url: `/instance/connect/${instance.instanceId}` },
+                { method: 'GET', url: `/instance/connect` }, // Maybe no ID in URL?
             ];
 
             for (const endpoint of endpoints) {
                 try {
-                    console.log(`[DEBUG] Trying QR Endpoint: ${baseUrl}${endpoint}`);
-                    const response = await axios.get(`${baseUrl}${endpoint}`, {
+                    console.log(`[DEBUG] Trying QR Endpoint (${endpoint.method}): ${baseUrl}${endpoint.url}`);
+                    const response = await axios({
+                        method: endpoint.method,
+                        url: `${baseUrl}${endpoint.url}`,
                         headers: headers,
                         ...axiosConfig
                     });
 
-                    console.log(`[DEBUG] Success on ${endpoint}`);
+                    console.log(`[DEBUG] Success on ${endpoint.url}`);
                     // normalize response
-                    if (response.data.base64) return { base64: response.data.base64 };
-                    if (response.data.qrcode) return { base64: response.data.qrcode };
-                    if (response.data.instance?.qrcode) return { base64: response.data.instance.qrcode };
+                    const resData = response.data;
+                    if (resData.base64) return { base64: resData.base64 };
+                    if (resData.qrcode) return { base64: resData.qrcode };
+                    if (resData.instance?.qrcode) return { base64: resData.instance.qrcode };
 
-                    return response.data;
+                    if (resData && (resData.base64 || resData.qrcode)) return resData; // Generic return
+                    return resData;
                 } catch (error) {
-                    console.log(`[DEBUG] Failed ${endpoint}: ${error.response?.status} ${error.response?.statusText}`);
+                    console.log(`[DEBUG] Failed ${endpoint.url}: ${error.response?.status} ${error.response?.statusText}`);
                 }
             }
 
