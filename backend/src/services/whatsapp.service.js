@@ -109,6 +109,9 @@ class WhatsAppService {
             // ...
 
             const token = decrypt(instance.token);
+            // UazAPI admin token (for fetching list)
+            const checkToken = process.env.UAZ_ADMIN_TOKEN || token;
+
             const baseUrl = instance.baseUrl.replace(/\/$/, '');
             const axiosConfig = { timeout: 10000 };
 
@@ -119,15 +122,28 @@ class WhatsAppService {
                 'admintoken': token // Some versions might use this?
             };
 
+            // [DEBUG] Check if instance exists and what is its real name
+            try {
+                console.log(`[DEBUG] Checking active instances on: ${baseUrl}/instance/fetchInstances`);
+                const check = await axios.get(`${baseUrl}/instance/fetchInstances`, {
+                    headers: headers,
+                    params: { token: checkToken }, // Some use query
+                    ...axiosConfig
+                });
+                console.log('[DEBUG] Active Instances:', JSON.stringify(check.data.map && check.data.map(i => i.instanceName || i.name) || check.data, null, 2));
+            } catch (e) { console.log('[DEBUG] Failed to fetch instances list:', e.message); }
+
             // List of potential endpoints to try
             const endpoints = [
                 { method: 'GET', url: `/instance/connect/${instance.instanceId}` },
                 { method: 'GET', url: `/instance/qr-base64` },
+                { method: 'GET', url: `/instance/qr-base64?instanceId=${instance.instanceId}` },
                 { method: 'GET', url: `/instance/qr-base64/${instance.instanceId}` },
                 { method: 'GET', url: `/message/qrCode/${instance.instanceId}` },
-                { method: 'GET', url: `/instance/qrcode/${instance.instanceId}` }, // Evolution v1.6 style
+                { method: 'GET', url: `/instance/qrcode/${instance.instanceId}` },
+                // V2 strict styles
+                { method: 'GET', url: `/instance/connect?instance=${instance.instanceId}` },
                 { method: 'POST', url: `/instance/connect/${instance.instanceId}` },
-                { method: 'GET', url: `/instance/connect` }, // Maybe no ID in URL?
             ];
 
             for (const endpoint of endpoints) {
