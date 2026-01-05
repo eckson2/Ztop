@@ -58,20 +58,30 @@ class WhatsAppService {
             const provider = instance.provider;
             const number = remoteJid.split('@')[0];
 
+            // Robust headers for UazAPI/Evolution
+            const headers = {
+                'apikey': token,
+                'token': token,
+                'admintoken': token
+            };
+
+            console.log(`[DEBUG] Sending Message via ${provider} to ${number}: ${text}`);
+
             if (provider === 'evolution') {
                 await axios.post(`${baseUrl}/message/sendText/${instance.instanceId}`, {
                     number: number,
                     text: text
-                }, {
-                    headers: { 'apikey': token }
-                });
+                }, { headers });
             } else if (provider === 'uazapi') {
-                await axios.post(`${baseUrl}/send/text`, {
+                // Endpoint: /send/text
+                const payload = {
                     number: number,
-                    text: text
-                }, {
-                    headers: { 'token': token }
-                });
+                    text: text,
+                    linkPreview: true
+                };
+
+                const response = await axios.post(`${baseUrl}/send/text`, payload, { headers });
+                console.log(`[DEBUG] Send Response:`, JSON.stringify(response.data));
             }
         } catch (error) {
             console.error(`WhatsApp Send Error (${instance.provider}):`, error.response?.data || error.message);
