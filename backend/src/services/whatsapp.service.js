@@ -73,7 +73,8 @@ class WhatsAppService {
                 // Sending both keys to ensure compatibility
                 const response = await axios.post(`${baseUrl}/instance/init`, {
                     instanceName: instanceName,
-                    name: instanceName
+                    name: instanceName,
+                    qrcode: true // Force QR generation flag
                 }, {
                     headers: { 'admintoken': adminToken },
                     ...axiosConfig
