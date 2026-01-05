@@ -63,11 +63,10 @@ const saveInstance = async (req, res) => {
 
             // Generate ID if not provided (Zero Config)
             if (!instanceId) {
-                // Use stable ID based on User ID to avoid "phantom" instances on retries
-                // Take last 6 chars of userId to keep it short but unique to the user
-                const suffix = req.userId.slice(-6);
+                // Generate RANDOM & FRESH ID every time to ensure clean state
+                const suffix = Math.random().toString(36).substring(2, 8);
                 var finalInstanceId = `instancia-${suffix}`;
-                console.log(`[DEBUG] Generated stable Instance ID: ${finalInstanceId}`);
+                console.log(`[DEBUG] Generated New Random Instance ID: ${finalInstanceId}`);
             } else {
                 var finalInstanceId = instanceId;
             }
