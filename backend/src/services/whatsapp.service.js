@@ -124,8 +124,8 @@ class WhatsAppService {
 
             // [DEBUG] Check if instance exists and what is its real name
             try {
-                console.log(`[DEBUG] Checking active instances on: ${baseUrl}/instance/fetchInstances`);
-                const check = await axios.get(`${baseUrl}/instance/fetchInstances`, {
+                console.log(`[DEBUG] Checking active instances on: ${baseUrl}/instance/fetch`);
+                const check = await axios.get(`${baseUrl}/instance/fetch`, {
                     headers: headers,
                     params: { token: checkToken }, // Some use query
                     ...axiosConfig
@@ -141,6 +141,7 @@ class WhatsAppService {
                 { method: 'GET', url: `/instance/qr-base64/${instance.instanceId}` },
                 { method: 'GET', url: `/message/qrCode/${instance.instanceId}` },
                 { method: 'GET', url: `/instance/qrcode/${instance.instanceId}` },
+                { method: 'GET', url: `/instance/qr/${instance.instanceId}` }, // <--- Standard Evolution/UazAPI endpoint
                 // V2 strict styles
                 { method: 'GET', url: `/instance/connect?instance=${instance.instanceId}` },
                 { method: 'POST', url: `/instance/connect/${instance.instanceId}` },
