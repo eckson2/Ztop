@@ -36,7 +36,19 @@ const saveInstance = async (req, res) => {
         // 2. Auto Provisioning (Only if manual data missing)
         else {
             console.log(`[PROVISIONING] ${provider} for user ${req.userId}`);
-            const provisioned = await WhatsAppService.provisionInstance(provider, instanceId);
+
+            // Generate ID if not provided (Zero Config)
+            if (!instanceId) {
+                const random = Math.floor(Math.random() * 10000);
+                // Assign to the 'let' variable extracted above, but since we modify it, better re-assign or use a new var.
+                // Actually 'instanceId' is a const from destructuring? No, destructuring creates let/const based on context? 
+                // Ah, 'const { ... }'. We need to supply it to provisionInstance.
+                var finalInstanceId = `instancia-${random}`;
+            } else {
+                var finalInstanceId = instanceId;
+            }
+
+            const provisioned = await WhatsAppService.provisionInstance(provider, finalInstanceId);
             data.baseUrl = provisioned.baseUrl;
             data.instanceId = provisioned.instanceId;
             data.token = encrypt(provisioned.token);
