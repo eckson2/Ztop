@@ -39,11 +39,11 @@ const saveInstance = async (req, res) => {
 
             // Generate ID if not provided (Zero Config)
             if (!instanceId) {
-                const random = Math.floor(Math.random() * 10000);
-                // Assign to the 'let' variable extracted above, but since we modify it, better re-assign or use a new var.
-                // Actually 'instanceId' is a const from destructuring? No, destructuring creates let/const based on context? 
-                // Ah, 'const { ... }'. We need to supply it to provisionInstance.
-                var finalInstanceId = `instancia-${random}`;
+                // Use stable ID based on User ID to avoid "phantom" instances on retries
+                // Take last 6 chars of userId to keep it short but unique to the user
+                const suffix = req.userId.slice(-6);
+                var finalInstanceId = `instancia-${suffix}`;
+                console.log(`[DEBUG] Generated stable Instance ID: ${finalInstanceId}`);
             } else {
                 var finalInstanceId = instanceId;
             }
