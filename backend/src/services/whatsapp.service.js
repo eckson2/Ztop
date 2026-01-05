@@ -68,8 +68,10 @@ class WhatsAppService {
                 console.log(`Creating UazAPI Instance (v2): ${baseUrl}/instance/init`);
 
                 // UazAPI v2 uses /instance/init and 'admintoken' header
+                // Sending both keys to ensure compatibility
                 const response = await axios.post(`${baseUrl}/instance/init`, {
-                    instanceName: instanceName
+                    instanceName: instanceName,
+                    name: instanceName
                 }, {
                     headers: { 'admintoken': adminToken },
                     ...axiosConfig
