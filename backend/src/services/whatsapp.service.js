@@ -51,12 +51,17 @@ class WhatsAppService {
                 if (!success) {
                     try {
                         console.log(`[DEBUG] Trying POST /webhook`);
-                        await axios.post(`${baseUrl}/webhook`, {
+                        const payload = {
                             webhookUrl: webhookUrl,
                             enabled: enabled,
-                            webhookByEvents: false, // Force false for broad compatibility first
-                            events: ['messages.upsert', 'message']
-                        }, { headers });
+                            webhookByEvents: true, // User enabled "Escutar eventos" manually
+                            events: ['messages.upsert', 'messages', 'messages_update', 'message'],
+                            addUrlEvents: false,
+                            addUrlTypesMessages: false
+                        };
+                        console.log('[DEBUG] Webhook Payload:', JSON.stringify(payload));
+
+                        await axios.post(`${baseUrl}/webhook`, payload, { headers });
                         success = true;
                     } catch (e) {
                         console.log(`[DEBUG] POST /webhook failed: ${e.response?.status}`);
