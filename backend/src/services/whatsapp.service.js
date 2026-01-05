@@ -103,56 +103,57 @@ class WhatsAppService {
      * Get QR Code or Connection Data
      */
     static async getConnectData(instance) {
-        // Disable Evolution block temporarily
-        // ...
+        try {
+            // Disable Evolution block temporarily
+            // ...
 
-        const token = decrypt(instance.token);
-        const baseUrl = instance.baseUrl.replace(/\/$/, '');
-        const axiosConfig = { timeout: 10000 };
+            const token = decrypt(instance.token);
+            const baseUrl = instance.baseUrl.replace(/\/$/, '');
+            const axiosConfig = { timeout: 10000 };
 
-        // Standardize headers: Send both for max compatibility
-        const headers = {
-            'apikey': token,
-            'token': token,
-            'admintoken': token // Some versions might use this?
-        };
+            // Standardize headers: Send both for max compatibility
+            const headers = {
+                'apikey': token,
+                'token': token,
+                'admintoken': token // Some versions might use this?
+            };
 
-        // List of potential endpoints to try
-        const endpoints = [
-            `/instance/connect/${instance.instanceId}`,
-            `/instance/qr-base64`,  // Some versions use query param or header context
-            `/instance/qr-base64/${instance.instanceId}`,
-            `/message/qrCode/${instance.instanceId}` // Another variation
-        ];
+            // List of potential endpoints to try
+            const endpoints = [
+                `/instance/connect/${instance.instanceId}`,
+                `/instance/qr-base64`,  // Some versions use query param or header context
+                `/instance/qr-base64/${instance.instanceId}`,
+                `/message/qrCode/${instance.instanceId}` // Another variation
+            ];
 
-        for (const endpoint of endpoints) {
-            try {
-                console.log(`[DEBUG] Trying QR Endpoint: ${baseUrl}${endpoint}`);
-                const response = await axios.get(`${baseUrl}${endpoint}`, {
-                    headers: headers,
-                    ...axiosConfig
-                });
+            for (const endpoint of endpoints) {
+                try {
+                    console.log(`[DEBUG] Trying QR Endpoint: ${baseUrl}${endpoint}`);
+                    const response = await axios.get(`${baseUrl}${endpoint}`, {
+                        headers: headers,
+                        ...axiosConfig
+                    });
 
-                console.log(`[DEBUG] Success on ${endpoint}`);
-                // normalize response
-                if (response.data.base64) return { base64: response.data.base64 };
-                if (response.data.qrcode) return { base64: response.data.qrcode };
-                if (response.data.instance?.qrcode) return { base64: response.data.instance.qrcode };
+                    console.log(`[DEBUG] Success on ${endpoint}`);
+                    // normalize response
+                    if (response.data.base64) return { base64: response.data.base64 };
+                    if (response.data.qrcode) return { base64: response.data.qrcode };
+                    if (response.data.instance?.qrcode) return { base64: response.data.instance.qrcode };
 
-                return response.data;
-            } catch (error) {
-                console.log(`[DEBUG] Failed ${endpoint}: ${error.response?.status} ${error.response?.statusText}`);
+                    return response.data;
+                } catch (error) {
+                    console.log(`[DEBUG] Failed ${endpoint}: ${error.response?.status} ${error.response?.statusText}`);
+                }
             }
-        }
 
-        // If all fail
-        console.error(`[DEBUG] All QR endpoints failed for ${instance.provider}`);
-        return null;
-    } catch(error) {
-        console.error(`WhatsApp Connect Error (${instance.provider}):`, error.response?.data || error.message);
-        return null;
+            // If all fail
+            console.error(`[DEBUG] All QR endpoints failed for ${instance.provider}`);
+            return null;
+        } catch (error) {
+            console.error(`WhatsApp Connect Error (${instance.provider}):`, error.response?.data || error.message);
+            return null;
+        }
     }
-}
 }
 
 module.exports = WhatsAppService;
