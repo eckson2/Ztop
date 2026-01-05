@@ -145,6 +145,8 @@ class WhatsAppService {
                 // V2 strict styles
                 { method: 'GET', url: `/instance/connect?instance=${instance.instanceId}` },
                 { method: 'POST', url: `/instance/connect/${instance.instanceId}` },
+                // User suggested: POST /instance/connect (header token based)
+                { method: 'POST', url: `/instance/connect`, data: { instanceName: instance.instanceId } },
             ];
 
             for (const endpoint of endpoints) {
@@ -154,6 +156,7 @@ class WhatsAppService {
                         method: endpoint.method,
                         url: `${baseUrl}${endpoint.url}`,
                         headers: headers,
+                        data: endpoint.data, // Send body if defined
                         ...axiosConfig
                     });
 
