@@ -3,6 +3,51 @@ const { decrypt } = require('../utils/crypto');
 
 class WhatsAppService {
     /**
+     * Set Webhook for Instance
+     */
+    static async setWebhook(instance, webhookUrl, enabled = true) {
+        try {
+            const token = decrypt(instance.token);
+            const baseUrl = instance.baseUrl.replace(/\/$/, '');
+            const headers = { 'apikey': token, 'token': token };
+
+            console.log(`[DEBUG] Setting Webhook for ${instance.instanceId} to ${webhookUrl}`);
+
+            if (instance.provider === 'uazapi') {
+                // Try common UazAPI webhook endpoints
+                try {
+                    await axios.post(`${baseUrl}/webhook/set/${instance.instanceId}`, {
+                        webhookUrl: webhookUrl,
+                        enabled: enabled,
+                        webhookByEvents: false,
+                        events: ['MESSAGES_UPSERT', 'MESSAGES_UPDATE', 'SEND_MESSAGE']
+                    }, { headers });
+                } catch (e) {
+                    // Fallback for some versions
+                    await axios.post(`${baseUrl}/instance/webhook`, {
+                        instanceId: instance.instanceId,
+                        webhookUrl: webhookUrl,
+                        enabled: enabled
+                    }, { headers });
+                }
+            } else {
+                // Evolution
+                await axios.post(`${baseUrl}/webhook/set/${instance.instanceId}`, {
+                    enabled: enabled,
+                    url: webhookUrl,
+                    webhookByEvents: true,
+                    events: ['MESSAGES_UPSERT']
+                }, { headers });
+            }
+            console.log('[DEBUG] Webhook set successfully');
+            return true;
+        } catch (error) {
+            console.error('[DEBUG] Failed to set webhook:', error.message);
+            return false;
+        }
+    }
+
+    /**
      * Sends a text message through the configured provider
      */
     static async sendMessage(instance, remoteJid, text) {
