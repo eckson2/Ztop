@@ -12,13 +12,21 @@ const Instances = () => {
         loadInstance();
     }, []);
 
+    useEffect(() => {
+        let interval;
+        if (qr && instance?.status !== 'connected') {
+            interval = setInterval(loadInstance, 3000);
+        }
+        return () => clearInterval(interval);
+    }, [qr, instance]);
+
     const loadInstance = async () => {
-        setLoading(true);
+        if (!qr && !instance) setLoading(true); // Only show spinner on initial load
         try {
             const { data } = await api.get('/whatsapp');
             setInstance(data);
-            if (data.status === 'disconnected') {
-                // Do nothing, wait for user action
+            if (data.status === 'connected') {
+                setQr(null);
             }
         } catch (e) {
             console.error(e);
