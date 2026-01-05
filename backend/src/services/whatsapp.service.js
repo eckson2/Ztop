@@ -133,20 +133,14 @@ class WhatsAppService {
                 console.log('[DEBUG] Active Instances:', JSON.stringify(check.data.map && check.data.map(i => i.instanceName || i.name) || check.data, null, 2));
             } catch (e) { console.log('[DEBUG] Failed to fetch instances list:', e.message); }
 
-            // List of potential endpoints to try
+            // List of potential endpoints to try - Prioritizing CONFIRMED working endpoint
             const endpoints = [
-                { method: 'GET', url: `/instance/connect/${instance.instanceId}` },
-                { method: 'GET', url: `/instance/qr-base64` },
-                { method: 'GET', url: `/instance/qr-base64?instanceId=${instance.instanceId}` },
-                { method: 'GET', url: `/instance/qr-base64/${instance.instanceId}` },
-                { method: 'GET', url: `/message/qrCode/${instance.instanceId}` },
-                { method: 'GET', url: `/instance/qrcode/${instance.instanceId}` },
-                { method: 'GET', url: `/instance/qr/${instance.instanceId}` }, // <--- Standard Evolution/UazAPI endpoint
-                // V2 strict styles
-                { method: 'GET', url: `/instance/connect?instance=${instance.instanceId}` },
-                { method: 'POST', url: `/instance/connect/${instance.instanceId}` },
-                // User suggested: POST /instance/connect (header token based)
+                // 1. Confirmed working endpoint (UazAPI v2)
                 { method: 'POST', url: `/instance/connect`, data: { instanceName: instance.instanceId } },
+
+                // Fallbacks (only kept just in case, but moved to bottom)
+                { method: 'GET', url: `/instance/qr/${instance.instanceId}` },
+                { method: 'GET', url: `/instance/connect/${instance.instanceId}` }
             ];
 
             for (const endpoint of endpoints) {
