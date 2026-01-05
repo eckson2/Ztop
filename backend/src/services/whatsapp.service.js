@@ -103,43 +103,56 @@ class WhatsAppService {
      * Get QR Code or Connection Data
      */
     static async getConnectData(instance) {
-        try {
-            const token = decrypt(instance.token);
-            const baseUrl = instance.baseUrl.replace(/\/$/, '');
-            const axiosConfig = { timeout: 10000 };
+        // Disable Evolution block temporarily
+        // ...
 
-            // Standardize: Both likely use Evolution endpoints logic
-            // Try v2 endpoint matching
-            // Note: UazAPI might need 'token' header instead of 'apikey'
-            const headers = { 'apikey': token };
-            if (instance.provider === 'uazapi') {
-                headers['token'] = token; // Add token header for UazAPI just in case
-            }
+        const token = decrypt(instance.token);
+        const baseUrl = instance.baseUrl.replace(/\/$/, '');
+        const axiosConfig = { timeout: 10000 };
 
-            const response = await axios.get(`${baseUrl}/instance/connect/${instance.instanceId}`, {
-                headers: headers,
-                ...axiosConfig
-            });
+        // Standardize headers: Send both for max compatibility
+        const headers = {
+            'apikey': token,
+            'token': token,
+            'admintoken': token // Some versions might use this?
+        };
 
-            return response.data;
-        } catch (error) {
-            console.error(`WhatsApp Connect Error (${instance.provider}):`, error.response?.data || error.message);
-            // Fallback for older Evolution versions / different forks
+        // List of potential endpoints to try
+        const endpoints = [
+            `/instance/connect/${instance.instanceId}`,
+            `/instance/qr-base64`,  // Some versions use query param or header context
+            `/instance/qr-base64/${instance.instanceId}`,
+            `/message/qrCode/${instance.instanceId}` // Another variation
+        ];
+
+        for (const endpoint of endpoints) {
             try {
-                if (instance.provider === 'uazapi') {
-                    const token = decrypt(instance.token);
-                    const baseUrl = instance.baseUrl.replace(/\/$/, '');
-                    const fallback = await axios.get(`${baseUrl}/instance/qr-base64`, {
-                        headers: { 'apikey': token },
-                        timeout: 5000
-                    });
-                    return { base64: fallback.data.qrcode || fallback.data };
-                }
-            } catch (e) { }
+                console.log(`[DEBUG] Trying QR Endpoint: ${baseUrl}${endpoint}`);
+                const response = await axios.get(`${baseUrl}${endpoint}`, {
+                    headers: headers,
+                    ...axiosConfig
+                });
 
-            return null;
+                console.log(`[DEBUG] Success on ${endpoint}`);
+                // normalize response
+                if (response.data.base64) return { base64: response.data.base64 };
+                if (response.data.qrcode) return { base64: response.data.qrcode };
+                if (response.data.instance?.qrcode) return { base64: response.data.instance.qrcode };
+
+                return response.data;
+            } catch (error) {
+                console.log(`[DEBUG] Failed ${endpoint}: ${error.response?.status} ${error.response?.statusText}`);
+            }
         }
+
+        // If all fail
+        console.error(`[DEBUG] All QR endpoints failed for ${instance.provider}`);
+        return null;
+    } catch(error) {
+        console.error(`WhatsApp Connect Error (${instance.provider}):`, error.response?.data || error.message);
+        return null;
     }
+}
 }
 
 module.exports = WhatsAppService;
