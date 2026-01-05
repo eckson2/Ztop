@@ -6,14 +6,12 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const app = express();
 
-// Debug Logger
-app.use((req, res, next) => {
-    console.log(`[INBOUND] ${req.method} ${req.url}`);
-    next();
-});
+const corsOptions = {
+    origin: [process.env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:3000'],
+    credentials: true
+};
 
-// Relaxed CORS for debugging
-app.use(cors({ origin: '*', credentials: true }));
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Basic health check
