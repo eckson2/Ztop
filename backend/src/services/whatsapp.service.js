@@ -39,6 +39,7 @@ class WhatsAppService {
         try {
             const axiosConfig = { timeout: 15000 }; // 15s timeout
 
+/*
             if (provider === 'evolution') {
                 const baseUrl = process.env.EVOLUTION_URL.replace(/\/$/, '');
                 const apiKey = process.env.EVOLUTION_API_KEY;
@@ -61,17 +62,19 @@ class WhatsAppService {
                     token: data.token || data.apikey || apiKey
                 };
             }
-            else if (provider === 'uazapi') {
+            else */ if (provider === 'uazapi') {
                 const baseUrl = process.env.UAZ_URL.replace(/\/$/, '');
                 const adminToken = process.env.UAZ_ADMIN_TOKEN;
 
                 console.log(`Creating UazAPI Instance (v2): ${baseUrl}/instance/init`);
+                console.log('Payload being sent:', { instanceName, name: instanceName });
 
                 // UazAPI v2 uses /instance/init and 'admintoken' header
                 // Sending both keys to ensure compatibility
                 const response = await axios.post(`${baseUrl}/instance/init`, {
                     instanceName: instanceName,
                     name: instanceName
+                }, {
                 }, {
                     headers: { 'admintoken': adminToken },
                     ...axiosConfig

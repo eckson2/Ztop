@@ -48,6 +48,7 @@ const saveInstance = async (req, res) => {
                 var finalInstanceId = instanceId;
             }
 
+            console.log('[DEBUG] finalInstanceId sent to provision:', finalInstanceId);
             const provisioned = await WhatsAppService.provisionInstance(provider, finalInstanceId);
             data.baseUrl = provisioned.baseUrl;
             data.instanceId = provisioned.instanceId;
