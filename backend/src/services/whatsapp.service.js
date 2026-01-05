@@ -191,22 +191,22 @@ class WhatsAppService {
 
             console.log(`[DEBUG] Checking Status (GET /instance/status) for ${instance.instanceId}`);
 
-            const adminToken = process.env.UAZ_ADMIN_TOKEN;
+            // headers same as getConnectData for consistency (it works there)
             const headers = {
                 'token': token,
                 'apikey': token,
-                'admintoken': adminToken // Add admin token for status checks
+                'admintoken': token // Use instance token here too as it works for other endpoints
             };
 
             // User recommended: GET /instance/status
             const statusEndpoints = [
                 // Most standard for v2
                 `/instance/status?instanceId=${instance.instanceId}`,
-                // Variations found in other UazAPI versions
-                `/instance/status?key=${instance.instanceId}`,
-                `/instance/status?id=${instance.instanceId}`,
-                // Fallback to path param
-                `/instance/status/${instance.instanceId}`
+
+                // Commented out to reduce noise, enable if needed
+                // `/instance/status?key=${instance.instanceId}`,
+                // `/instance/status?id=${instance.instanceId}`,
+                // `/instance/status/${instance.instanceId}`
             ];
 
             for (const endpoint of statusEndpoints) {
