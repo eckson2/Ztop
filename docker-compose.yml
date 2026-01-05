@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15-alpine
@@ -31,8 +29,8 @@ services:
       - UAZ_URL=${UAZ_URL}
       - UAZ_ADMIN_TOKEN=${UAZ_ADMIN_TOKEN}
       - FRONTEND_URL=https://front.ztop.dev.br
-    depends_on:
-      - postgres
+    networks:
+      - topnet
     deploy:
       labels:
         - "traefik.enable=true"
@@ -41,8 +39,6 @@ services:
         - "traefik.http.routers.dialogbot-back-secure.tls=true"
         - "traefik.http.routers.dialogbot-back-secure.tls.certresolver=letsencryptresolver"
         - "traefik.http.services.dialogbot-back.loadbalancer.server.port=3000"
-    networks:
-      - topnet
 
   frontend:
     image: node:20-alpine
@@ -52,6 +48,8 @@ services:
     environment:
       - VITE_API_URL=https://back.ztop.dev.br/api
     command: sh -c "npm install && npm run build && npx serve -s dist -p 80"
+    networks:
+      - topnet
     deploy:
       labels:
         - "traefik.enable=true"
@@ -60,8 +58,6 @@ services:
         - "traefik.http.routers.dialogbot-front-secure.tls=true"
         - "traefik.http.routers.dialogbot-front-secure.tls.certresolver=letsencryptresolver"
         - "traefik.http.services.dialogbot-front.loadbalancer.server.port=80"
-    networks:
-      - topnet
 
 volumes:
   botsaas_db:
