@@ -11,7 +11,18 @@ const getInstance = async (req, res) => {
 
         if (instance) {
             instance.token = '********';
-            // Optionally get real-time connection status here
+            // Check real-time status if configured
+            if (instance.instanceId && instance.baseUrl) {
+                try {
+                    const status = await WhatsAppService.getStatus(instance);
+                    instance.status = status;
+                    // Update DB with latest status
+                    await prisma.whatsAppInstance.update({
+                        where: { id: instance.id },
+                        data: { status: status }
+                    });
+                } catch (e) { console.error('Status Check Error:', e.message); }
+            }
         }
 
         res.json(instance || {});
