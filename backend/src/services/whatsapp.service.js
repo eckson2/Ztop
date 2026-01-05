@@ -155,6 +155,7 @@ class WhatsAppService {
                     });
 
                     console.log(`[DEBUG] Success on ${endpoint.url}`);
+                    console.log('[DEBUG] Connection Response Payload:', JSON.stringify(response.data)); // <--- Log what we got
                     // normalize response
                     const resData = response.data;
                     if (resData.base64) return { base64: resData.base64 };
@@ -185,7 +186,25 @@ class WhatsAppService {
             const baseUrl = instance.baseUrl.replace(/\/$/, '');
             const axiosConfig = { timeout: 5000 };
 
-            console.log(`[DEBUG] Checking Status for ${instance.instanceId}`); // <--- Log start
+            console.log(`[DEBUG] Checking Status for ${instance.instanceId}`);
+
+            const adminToken = process.env.UAZ_ADMIN_TOKEN;
+            const headers = {
+                'token': token,
+                'apikey': token,
+                'admintoken': adminToken // Add admin token for status checks
+            };
+
+            // First, try the known working endpoint to see if it reports status
+            try {
+                const checkConnect = await axios.post(`${baseUrl}/instance/connect`, {
+                    instanceName: instance.instanceId
+                }, { headers, ...axiosConfig });
+
+                console.log(`[DEBUG] Status Check (POST /connect):`, JSON.stringify(checkConnect.data));
+                const s = checkConnect.data.instance?.state || checkConnect.data.state || checkConnect.data.status;
+                if (s === 'open' || s === 'connected') return 'connected';
+            } catch (e) { console.log(`[DEBUG] Status POST /connect failed: ${e.message}`); }
 
             const endpoints = [
                 `/instance/connectionState/${instance.instanceId}`,
