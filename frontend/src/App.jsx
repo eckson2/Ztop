@@ -91,7 +91,7 @@ const Layout = ({ children }) => {
 
         <nav className="space-y-2">
           <SidebarItem icon={<LayoutDashboard size={20} />} label="Dashboard" to="/" />
-          <SidebarItem icon={<Settings size={20} />} label="Configurar Motor" to="/setup" />
+          <SidebarItem icon={<Settings size={20} />} label="Configurar BOT" to="/setup" />
           <SidebarItem icon={<Smartphone size={20} />} label="WhatsApp" to="/instances" />
 
           <div className="pt-6 mt-6 border-t border-white/10 space-y-2">

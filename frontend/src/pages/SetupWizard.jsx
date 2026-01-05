@@ -4,10 +4,8 @@ import { Smartphone, Bot, CheckCircle2, Cloud, MessageSquare, ExternalLink, Refr
 import { QRCodeSVG } from 'qrcode.react';
 
 const SetupWizard = () => {
-    const [step, setStep] = useState(1);
     const [botType, setBotType] = useState('dialogflow');
     const [botConfig, setBotConfig] = useState({});
-    const [waConfig, setWaConfig] = useState({});
     const [loading, setLoading] = useState(false);
     const [msg, setMsg] = useState('');
 
@@ -18,9 +16,7 @@ const SetupWizard = () => {
     const loadConfigs = async () => {
         try {
             const botData = await api.get('/bots');
-            const waData = await api.get('/whatsapp');
             setBotConfig(botData.data);
-            setWaConfig(waData.data);
             if (botData.data.botType) setBotType(botData.data.botType);
         } catch (e) { }
     };
@@ -29,134 +25,71 @@ const SetupWizard = () => {
         setLoading(true);
         try {
             await api.post('/bots', { ...botConfig, botType });
-            setStep(2);
-            setMsg('Configuração do motor salva!');
+            setMsg('Configuração do motor salva com sucesso!');
+            // Clear message after 3 seconds
+            setTimeout(() => setMsg(''), 3000);
         } catch (e) {
             setMsg('Erro ao salvar bot');
         }
         setLoading(false);
     };
 
-    const handleSaveWA = async () => {
-        setLoading(true);
-        try {
-            await api.post('/whatsapp', waConfig);
-            setStep(3);
-            setMsg('Dados do WhatsApp salvos!');
-        } catch (e) {
-            setMsg('Erro ao salvar WhatsApp');
-        }
-        setLoading(false);
-    };
-
     return (
         <div className="max-w-4xl mx-auto py-10 px-6">
-            {/* Header / Steps Indicator */}
-            <div className="flex justify-between items-center mb-12 relative">
-                <StepIndicator current={step} number={1} label="Motor" icon={<Bot size={20} />} />
-                <div className={`flex-1 h-1 mx-4 rounded ${step > 1 ? 'bg-primary-500' : 'bg-slate-700'}`} />
-                <StepIndicator current={step} number={2} label="Conexão" icon={<Smartphone size={20} />} />
-                <div className={`flex-1 h-1 mx-4 rounded ${step > 2 ? 'bg-primary-500' : 'bg-slate-700'}`} />
-                <StepIndicator current={step} number={3} label="Ativo" icon={<CheckCircle2 size={20} />} />
-            </div>
+            <h1 className="text-3xl font-bold gradient-text mb-2">Configurar BOT</h1>
+            <p className="text-slate-400 mb-8">Escolha e configure a inteligência que responderá seus clientes.</p>
 
-            {/* Step 1: Engine Selection */}
-            {step === 1 && (
-                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <SelectionCard
-                            active={botType === 'dialogflow'}
-                            onClick={() => setBotType('dialogflow')}
-                            title="Google Dialogflow"
-                            desc="Poderoso processamento de linguagem natural (NLP)."
-                            icon={<Cloud className="text-blue-400" size={32} />}
-                        />
-                        <SelectionCard
-                            active={botType === 'typebot'}
-                            onClick={() => setBotType('typebot')}
-                            title="Typebot"
-                            desc="Fluxos conversacionais visuais e intuitivos."
-                            icon={<MessageSquare className="text-pink-400" size={32} />}
-                        />
-                    </div>
+            {msg && (
+                <div className={`p-4 mb-6 rounded-xl border ${msg.includes('Erro') ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-green-500/10 border-green-500/20 text-green-400'}`}>
+                    {msg}
+                </div>
+            )}
 
-                    <div className="glass p-8 rounded-3xl space-y-6 border border-white/10">
-                        {botType === 'dialogflow' ? (
-                            <div className="space-y-4">
-                                <h3 className="font-bold text-xl">Configurar Dialogflow</h3>
-                                <Field label="Project ID" value={botConfig.dialogflowProjectId} onChange={v => setBotConfig({ ...botConfig, dialogflowProjectId: v })} />
-                                <div className="space-y-1">
-                                    <label className="text-xs text-slate-400 font-medium ml-1">Service Account JSON</label>
-                                    <textarea
-                                        className="w-full h-32 bg-slate-800/50 border border-white/10 rounded-xl p-4 text-xs font-mono text-white outline-none focus:ring-2 focus:ring-primary-500"
-                                        placeholder='{"type": "service_account", ...}'
-                                        value={botConfig.dialogflowJson === '********' ? '' : botConfig.dialogflowJson}
-                                        onChange={e => setBotConfig({ ...botConfig, dialogflowJson: e.target.value })}
-                                    />
-                                </div>
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <SelectionCard
+                        active={botType === 'dialogflow'}
+                        onClick={() => setBotType('dialogflow')}
+                        title="Google Dialogflow"
+                        desc="Poderoso processamento de linguagem natural (NLP)."
+                        icon={<Cloud className="text-blue-400" size={32} />}
+                    />
+                    <SelectionCard
+                        active={botType === 'typebot'}
+                        onClick={() => setBotType('typebot')}
+                        title="Typebot"
+                        desc="Fluxos conversacionais visuais e intuitivos."
+                        icon={<MessageSquare className="text-pink-400" size={32} />}
+                    />
+                </div>
+
+                <div className="glass p-8 rounded-3xl space-y-6 border border-white/10">
+                    {botType === 'dialogflow' ? (
+                        <div className="space-y-4">
+                            <h3 className="font-bold text-xl">Configurar Dialogflow</h3>
+                            <Field label="Project ID" value={botConfig.dialogflowProjectId} onChange={v => setBotConfig({ ...botConfig, dialogflowProjectId: v })} />
+                            <div className="space-y-1">
+                                <label className="text-xs text-slate-400 font-medium ml-1">Service Account JSON</label>
+                                <textarea
+                                    className="w-full h-32 bg-slate-800/50 border border-white/10 rounded-xl p-4 text-xs font-mono text-white outline-none focus:ring-2 focus:ring-primary-500"
+                                    placeholder='{"type": "service_account", ...}'
+                                    value={botConfig.dialogflowJson === '********' ? '' : botConfig.dialogflowJson}
+                                    onChange={e => setBotConfig({ ...botConfig, dialogflowJson: e.target.value })}
+                                />
                             </div>
-                        ) : (
-                            <div className="space-y-4">
-                                <h3 className="font-bold text-xl">Configurar Typebot</h3>
-                                <Field label="Typebot ID" value={botConfig.typebotId} onChange={v => setBotConfig({ ...botConfig, typebotId: v })} />
-                                <Field label="API Token" value={botConfig.typebotToken === '********' ? '' : botConfig.typebotToken} onChange={v => setBotConfig({ ...botConfig, typebotToken: v })} type="password" />
-                            </div>
-                        )}
-                        <button onClick={handleSaveBot} className="w-full py-4 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all">
-                            {loading ? <RefreshCw className="animate-spin" /> : 'Salvar e Próximo'}
-                        </button>
-                    </div>
-
-                    {/* Provider Selection (Added to bottom of Step 1) */}
-                    <div className="glass p-8 rounded-3xl space-y-4 border border-white/10">
-                        <h3 className="font-bold text-xl">Provedor de WhatsApp</h3>
-                        <p className="text-slate-400 text-sm">Selecione qual API será usada para gerar o QR Code na próxima etapa.</p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <label className={`p-4 rounded-xl border transition-all cursor-pointer ${waConfig.provider === 'evolution' ? 'border-primary-500 bg-primary-500/10' : 'border-white/10 bg-white/5 hover:border-white/30'}`}>
-                                <input type="radio" name="provider" className="hidden" onClick={() => setWaConfig({ ...waConfig, provider: 'evolution' })} checked={waConfig.provider !== 'uazapi'} />
-                                <span className="font-medium text-white flex items-center gap-2"><Smartphone size={18} /> Evolution API</span>
-                            </label>
-                            <label className={`p-4 rounded-xl border transition-all cursor-pointer ${waConfig.provider === 'uazapi' ? 'border-primary-500 bg-primary-500/10' : 'border-white/10 bg-white/5 hover:border-white/30'}`}>
-                                <input type="radio" name="provider" className="hidden" onClick={() => setWaConfig({ ...waConfig, provider: 'uazapi' })} checked={waConfig.provider === 'uazapi'} />
-                                <span className="font-medium text-white flex items-center gap-2"><Smartphone size={18} /> UazAPI</span>
-                            </label>
                         </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Step 2: WhatsApp Connection */}
-            {step === 2 && (
-                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
-                    <div className="glass p-10 rounded-3xl space-y-8 border border-white/10 text-center">
-                        <QRCodeSection
-                            provider={waConfig.provider || 'evolution'}
-                            onConnected={() => setStep(3)}
-                            onError={(err) => setMsg(err)}
-                        />
-                    </div>
-                </div>
-            )}
-
-            {/* Step 3: Success / Webhook Info */}
-            {step === 3 && (
-                <div className="glass p-10 rounded-3xl text-center space-y-6 border border-white/10 animate-in zoom-in-95 duration-500">
-                    <div className="w-24 h-24 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <CheckCircle2 size={48} />
-                    </div>
-                    <h2 className="text-3xl font-bold">Bot Pronto para Ativar!</h2>
-                    <p className="text-slate-400 max-w-md mx-auto italic">
-                        Configure a URL abaixo no seu provedor de WhatsApp como o Webhook de mensagens:
-                    </p>
-                    <div className="bg-slate-950/80 p-5 rounded-xl font-mono text-xs break-all border border-white/10 text-primary-400 select-all">
-                        {`https://back.ztop.dev.br/api/webhook/whatsapp/${JSON.parse(localStorage.getItem('user'))?.id}?token=${JSON.parse(localStorage.getItem('user'))?.webhookToken}`}
-                    </div>
-
-                    <button onClick={() => window.location.href = '/'} className="w-full py-4 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold transition-all">
-                        Ir para o Dashboard
+                    ) : (
+                        <div className="space-y-4">
+                            <h3 className="font-bold text-xl">Configurar Typebot</h3>
+                            <Field label="Typebot ID" value={botConfig.typebotId} onChange={v => setBotConfig({ ...botConfig, typebotId: v })} />
+                            <Field label="API Token" value={botConfig.typebotToken === '********' ? '' : botConfig.typebotToken} onChange={v => setBotConfig({ ...botConfig, typebotToken: v })} type="password" />
+                        </div>
+                    )}
+                    <button onClick={handleSaveBot} className="w-full py-4 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all">
+                        {loading ? <RefreshCw className="animate-spin" /> : 'Salvar Configuração'}
                     </button>
                 </div>
-            )}
+            </div>
         </div>
     );
 };

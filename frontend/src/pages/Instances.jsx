@@ -33,6 +33,19 @@ const Instances = () => {
         }
     };
 
+    const [provider, setProvider] = useState('evolution'); // State for local selection
+
+    const handleCreateInstance = async () => {
+        setLoading(true);
+        try {
+            await api.post('/whatsapp', { provider });
+            await loadInstance(); // Reload to start QR process
+        } catch (e) {
+            console.error(e);
+        }
+        setLoading(false);
+    };
+
     return (
         <div className="max-w-5xl mx-auto p-8">
             <div className="flex justify-between items-end mb-10">
@@ -49,11 +62,26 @@ const Instances = () => {
             </div>
 
             {!instance ? (
-                <div className="glass p-12 text-center rounded-3xl">
+                <div className="glass p-12 text-center rounded-3xl space-y-8">
                     <Smartphone size={48} className="mx-auto text-slate-600 mb-4" />
                     <h3 className="text-xl font-bold">Nenhuma instância configurada</h3>
-                    <p className="text-slate-400 mt-2 mb-6">Você precisa configurar seu bot primeiro.</p>
-                    <button onClick={() => window.location.href = '/setup'} className="px-6 py-3 bg-primary-500 rounded-xl font-bold">Configurar Agora</button>
+                    <p className="text-slate-400 mt-2 mb-6">Selecione o provedor e incie a conexão.</p>
+
+                    {/* Provider Selection (Migrated from SetupWizard) */}
+                    <div className="max-w-md mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                        <label className={`p-4 rounded-xl border transition-all cursor-pointer ${provider === 'evolution' ? 'border-primary-500 bg-primary-500/10' : 'border-white/10 bg-white/5 hover:border-white/30'}`}>
+                            <input type="radio" name="provider" className="hidden" onClick={() => setProvider('evolution')} checked={provider === 'evolution'} />
+                            <span className="font-medium text-white flex items-center gap-2"><Smartphone size={18} /> Evolution API</span>
+                        </label>
+                        <label className={`p-4 rounded-xl border transition-all cursor-pointer ${provider === 'uazapi' ? 'border-primary-500 bg-primary-500/10' : 'border-white/10 bg-white/5 hover:border-white/30'}`}>
+                            <input type="radio" name="provider" className="hidden" onClick={() => setProvider('uazapi')} checked={provider === 'uazapi'} />
+                            <span className="font-medium text-white flex items-center gap-2"><Smartphone size={18} /> UazAPI</span>
+                        </label>
+                    </div>
+
+                    <button onClick={handleCreateInstance} className="px-8 py-3 bg-primary-500 hover:bg-primary-600 rounded-xl font-bold transition-all">
+                        {loading ? 'Criando...' : 'Iniciar Conexão'}
+                    </button>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -77,9 +105,25 @@ const Instances = () => {
                             </div>
                         </div>
 
-                        <div className="mt-10 pt-6 border-t border-white/5">
-                            <p className="text-xs text-slate-500 mb-2">Server URL</p>
-                            <code className="text-xs break-all text-slate-300 bg-black/30 p-2 rounded block">{instance.baseUrl}</code>
+                        <div className="mt-10 pt-6 border-t border-white/5 space-y-4">
+                            <div>
+                                <p className="text-xs text-slate-500 mb-2">Server URL</p>
+                                <code className="text-xs break-all text-slate-300 bg-black/30 p-2 rounded block">{instance.baseUrl}</code>
+                            </div>
+
+                            {/* Option to Reset/Delete Instance to switch provider */}
+                            <button
+                                onClick={async () => {
+                                    if (confirm('Isso irá desconectar o WhatsApp atual. Deseja continuar?')) {
+                                        setLoading(true);
+                                        try { await api.delete('/whatsapp'); setInstance(null); } catch (e) { }
+                                        setLoading(false);
+                                    }
+                                }}
+                                className="w-full py-2 border border-red-500/30 text-red-400 hover:bg-red-500/10 rounded-lg text-xs font-bold transition-all"
+                            >
+                                Desconectar / Trocar Provedor
+                            </button>
                         </div>
                     </div>
 
