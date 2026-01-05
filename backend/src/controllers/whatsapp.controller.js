@@ -15,6 +15,18 @@ const getInstance = async (req, res) => {
                 try {
                     const status = await WhatsAppService.getStatus(instance);
                     instance.status = status;
+
+                    // Force Webhook Config on every check if connected
+                    // This ensures it survives restarts of the provider
+                    if (status === 'connected') {
+                        const user = await prisma.user.findUnique({ where: { id: req.userId } });
+                        if (user && user.webhookToken) {
+                            const webhookUrl = `${process.env.BACKEND_URL || 'https://back.ztop.dev.br'}/api/webhook/whatsapp/${user.id}?token=${user.webhookToken}`;
+                            console.log(`[DEBUG] Triggering Auto-Webhook for ${instance.instanceId}`);
+                            await WhatsAppService.setWebhook(instance, webhookUrl);
+                        }
+                    }
+
                     // Update DB with latest status
                     await prisma.whatsAppInstance.update({
                         where: { id: instance.id },
