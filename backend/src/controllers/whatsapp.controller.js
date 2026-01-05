@@ -10,8 +10,7 @@ const getInstance = async (req, res) => {
         });
 
         if (instance) {
-            instance.token = '********';
-            // Check real-time status if configured
+            // Check real-time status if configured (BEFORE masking token)
             if (instance.instanceId && instance.baseUrl) {
                 try {
                     const status = await WhatsAppService.getStatus(instance);
@@ -23,6 +22,8 @@ const getInstance = async (req, res) => {
                     });
                 } catch (e) { console.error('Status Check Error:', e.message); }
             }
+
+            instance.token = '********';
         }
 
         res.json(instance || {});
