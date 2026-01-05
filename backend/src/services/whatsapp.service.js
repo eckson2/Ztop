@@ -182,6 +182,42 @@ class WhatsAppService {
             return null;
         }
     }
+    /**
+     * Get Connection Status
+     */
+    static async getStatus(instance) {
+        try {
+            const token = decrypt(instance.token);
+            const baseUrl = instance.baseUrl.replace(/\/$/, '');
+            const axiosConfig = { timeout: 5000 };
+
+            const endpoints = [
+                `/instance/connectionState/${instance.instanceId}`,
+                `/instance/status/${instance.instanceId}`,
+                `/instance/status?instanceId=${instance.instanceId}`
+            ];
+
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await axios.get(`${baseUrl}${endpoint}`, {
+                        headers: { 'token': token, 'apikey': token },
+                        ...axiosConfig
+                    });
+
+                    // Normalize status
+                    const state = response.data.instance?.state || response.data.state || response.data.status;
+                    if (state === 'open' || state === 'connected') return 'connected';
+                    if (state === 'close' || state === 'disconnected') return 'disconnected';
+                    if (state === 'connecting') return 'connecting';
+
+                    if (response.data.instance?.status) return response.data.instance.status;
+                } catch (e) { }
+            }
+            return 'disconnected';
+        } catch (error) {
+            return 'disconnected';
+        }
+    }
 }
 
 module.exports = WhatsAppService;
