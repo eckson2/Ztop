@@ -40,7 +40,15 @@ const handleWebhook = async (req, res) => {
             console.log('[DEBUG] UazAPI Webhook Payload:', JSON.stringify(body));
 
             // UazAPI can send 'message' or 'messages.upsert' depending on version
-            if (body.event === 'messages.upsert' && body.data) {
+            // V3 / Universal Format (seen in logs)
+            if (body.message && (body.EventType === 'messages' || !body.event)) {
+                const msg = body.message;
+                remoteJid = msg.chatid || msg.remoteJid;
+                text = msg.text || msg.content || msg.conversation;
+                isMe = msg.fromMe;
+            }
+            // V2 (Evolution-like wrapper)
+            else if (body.event === 'messages.upsert' && body.data) {
                 // Format v2 similar to Evolution
                 const msg = body.data.message || body.data;
                 remoteJid = body.data.key?.remoteJid || body.data.jid;
@@ -54,7 +62,7 @@ const handleWebhook = async (req, res) => {
                 isMe = body.data.wasSentByApi || false;
             }
             else {
-                // Unknown event or status update
+                console.log('[DEBUG] Unknown Payload Format:', JSON.stringify(body));
                 return res.sendStatus(200);
             }
         }
