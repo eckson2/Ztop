@@ -47,13 +47,15 @@ class WhatsAppService {
                     }
                 }
 
-                // Attempt 3: POST /webhook (v1 legacy)
+                // Attempt 3: POST /webhook (v1 legacy / universal)
                 if (!success) {
                     try {
                         console.log(`[DEBUG] Trying POST /webhook`);
                         await axios.post(`${baseUrl}/webhook`, {
                             webhookUrl: webhookUrl,
-                            enabled: enabled
+                            enabled: enabled,
+                            webhookByEvents: false, // Force false for broad compatibility first
+                            events: ['messages.upsert', 'message']
                         }, { headers });
                         success = true;
                     } catch (e) {
