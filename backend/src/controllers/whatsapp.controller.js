@@ -22,19 +22,25 @@ const getInstance = async (req, res) => {
 
 const saveInstance = async (req, res) => {
     try {
-        const { provider, instanceId } = req.body; // User chooses provider and name
+        const { provider, instanceId, baseUrl, token } = req.body; // User inputs
 
-        // 1. Provision Instance Automagically
-        console.log(`[PROVISIONING] ${provider} for user ${req.userId}`);
-        const provisioned = await WhatsAppService.provisionInstance(provider, instanceId);
+        let data = { provider, instanceId, status: 'disconnected' };
 
-        const data = {
-            provider,
-            baseUrl: provisioned.baseUrl,
-            instanceId: provisioned.instanceId,
-            token: encrypt(provisioned.token),
-            status: 'disconnected'
-        };
+        // 1. Manual Connection (User provided URL + Token)
+        if (baseUrl && token && token !== '********') {
+            console.log(`[MANUAL CONNECT] ${provider} for user ${req.userId}`);
+            data.baseUrl = baseUrl;
+            data.token = encrypt(token);
+            // Optionally we could verify the connection here
+        }
+        // 2. Auto Provisioning (Only if manual data missing)
+        else {
+            console.log(`[PROVISIONING] ${provider} for user ${req.userId}`);
+            const provisioned = await WhatsAppService.provisionInstance(provider, instanceId);
+            data.baseUrl = provisioned.baseUrl;
+            data.instanceId = provisioned.instanceId;
+            data.token = encrypt(provisioned.token);
+        }
 
         const instance = await prisma.whatsappInstance.upsert({
             where: { userId: req.userId },
@@ -43,7 +49,7 @@ const saveInstance = async (req, res) => {
         });
 
         res.json({
-            message: 'Instância provisionada com sucesso',
+            message: 'Instância salva com sucesso',
             instance: { ...instance, token: '********' }
         });
     } catch (error) {
