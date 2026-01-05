@@ -53,6 +53,7 @@ class WhatsAppService {
                         console.log(`[DEBUG] Trying POST /webhook`);
                         const payload = {
                             url: webhookUrl,
+                            enabled: true, // Re-adding explicit enable
                             events: ['messages', 'messages_upsert', 'messages_update', 'message'],
                             excludeMessages: ['wasSentByApi', 'isGroupYes', 'fromMe'],
                             addUrlEvents: false,
