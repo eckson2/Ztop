@@ -65,23 +65,22 @@ class WhatsAppService {
                 const baseUrl = process.env.UAZ_URL.replace(/\/$/, '');
                 const adminToken = process.env.UAZ_ADMIN_TOKEN;
 
-                console.log(`Creating UazAPI Instance: ${baseUrl}/instance/create`);
+                console.log(`Creating UazAPI Instance (v2): ${baseUrl}/instance/init`);
 
-                // Assuming UazAPI is Evolution-based (standard), we use /instance/create
-                // If it's old legacy, we might need a fallback, but let's try standard first.
-                const response = await axios.post(`${baseUrl}/instance/create`, {
-                    instanceName: instanceName,
-                    qrcode: true
+                // UazAPI v2 uses /instance/init and 'admintoken' header
+                const response = await axios.post(`${baseUrl}/instance/init`, {
+                    instanceName: instanceName
                 }, {
-                    headers: { 'apikey': adminToken }, // Evolution usually expects 'apikey'
+                    headers: { 'admintoken': adminToken },
                     ...axiosConfig
                 });
 
-                const data = response.data.instance || response.data;
+                // UazAPI v2 returns { instance: { instanceName, ... }, hash: "..." } or { token: "..." }
+                const data = response.data;
                 return {
                     baseUrl,
-                    instanceId: data.instanceName || instanceName,
-                    token: data.hash || data.token || data.apikey // Adjust based on return
+                    instanceId: data.instance?.instanceName || instanceName,
+                    token: data.hash || data.token || data.instance?.token
                 };
             }
             throw new Error('Provedor não suportado');
