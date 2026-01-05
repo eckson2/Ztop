@@ -91,7 +91,17 @@ const handleWebhook = async (req, res) => {
         // 5. Send Responses back to WhatsApp
         if (responses && responses.length > 0) {
             for (const resp of responses) {
-                await WhatsAppService.sendMessage(user.whatsappInstance, remoteJid, resp);
+                // Identify type: formatted object or legacy string
+                const content = typeof resp === 'string' ? resp : resp.content;
+                const type = typeof resp === 'string' ? 'text' : resp.type;
+                const url = typeof resp === 'string' ? null : resp.url;
+
+                if (type === 'text') {
+                    if (content) await WhatsAppService.sendMessage(user.whatsappInstance, remoteJid, content);
+                } else if (['image', 'video', 'audio', 'document'].includes(type)) {
+                    await WhatsAppService.sendMedia(user.whatsappInstance, remoteJid, url, type, content);
+                }
+
                 // 6. Log Outbound Message
                 await MetricsService.logMessage(user.id, 'out');
             }

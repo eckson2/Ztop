@@ -88,6 +88,45 @@ class WhatsAppService {
 
 
     /**
+     * Sends a media message (Image, Audio, Video, Document)
+     */
+    static async sendMedia(instance, remoteJid, url, type, caption = '') {
+        try {
+            const token = decrypt(instance.token);
+            const baseUrl = instance.baseUrl.replace(/\/$/, '');
+            const number = remoteJid.split('@')[0];
+            const headers = { 'apikey': token, 'token': token, 'admintoken': token };
+
+            console.log(`[DEBUG] Sending ${type} via ${instance.provider} to ${number}`);
+
+            if (instance.provider === 'evolution') {
+                // Evolution API: /message/sendMedia/{instance}
+                const mediaType = type === 'unknown' ? 'document' : type; // active backup
+                await axios.post(`${baseUrl}/message/sendMedia/${instance.instanceId}`, {
+                    number: number,
+                    mediaMessage: {
+                        mediatype: mediaType,
+                        media: url,
+                        caption: caption
+                    }
+                }, { headers });
+            } else if (instance.provider === 'uazapi') {
+                // UazAPI v2: /send/media
+                const payload = {
+                    number: number,
+                    url: url,
+                    type: type, // image, video, audio, document
+                    caption: caption,
+                    extension: type === 'audio' ? 'mp3' : 'jpg' // Basic fallback guess
+                };
+                await axios.post(`${baseUrl}/send/media`, payload, { headers });
+            }
+        } catch (error) {
+            console.error(`WhatsApp Media Error (${instance.provider}):`, error.response?.data || error.message);
+        }
+    }
+
+    /**
      * Sends a text message through the configured provider
      */
     static async sendMessage(instance, remoteJid, text) {

@@ -32,13 +32,49 @@ class DialogflowService {
             const result = responses[0].queryResult;
 
             // Extract fulfillment messages (can be multiple)
+            const responses = [];
+
             if (result.fulfillmentMessages && result.fulfillmentMessages.length > 0) {
-                return result.fulfillmentMessages
-                    .filter(m => m.text)
-                    .map(m => m.text.text[0]);
+                for (const msg of result.fulfillmentMessages) {
+                    if (msg.text) {
+                        responses.push({ type: 'text', content: msg.text.text[0] });
+                    }
+                    else if (msg.image) {
+                        responses.push({
+                            type: 'image',
+                            url: msg.image.imageUri,
+                            content: '' // No caption in standard image
+                        });
+                    }
+                    else if (msg.payload) {
+                        // Support Custom Payload: { "whatsapp": { "type": "image/audio/video", "url": "...", "caption": "..." } }
+                        // Or Generic Custom Payload
+                        const payload = msg.payload.fields;
+                        // Simplistic parsing of Protobuf Struct - Dialogflow often wraps in 'fields'
+                        // Actually msg.payload is already a JS object if using library, let's assume standard structure
+
+                        // Check for known keys
+                        if (payload.whatsapp) {
+                            const wa = payload.whatsapp.structValue ? payload.whatsapp.structValue.fields : payload.whatsapp;
+
+                            // Handling Protobuf Struct to JS Object extraction (simplified)
+                            const extractValue = (field) => field.stringValue || field;
+
+                            const type = extractValue(wa.type || wa.fields?.type);
+                            const url = extractValue(wa.url || wa.fields?.url);
+                            const caption = extractValue(wa.caption || wa.fields?.caption);
+
+                            if (type && url) {
+                                responses.push({ type, url, content: caption });
+                            }
+                        }
+                    }
+                }
+            } else if (result.fulfillmentText) {
+                responses.push({ type: 'text', content: result.fulfillmentText });
             }
 
-            return [result.fulfillmentText];
+            return responses;
         } catch (error) {
             console.error('Dialogflow Error:', error);
             throw error;
