@@ -37,10 +37,26 @@ const handleWebhook = async (req, res) => {
             text = message.message?.conversation || message.message?.extendedTextMessage?.text;
             isMe = message.key.fromMe;
         } else {
-            if (body.type !== 'message') return res.sendStatus(200);
-            remoteJid = body.data.from;
-            text = body.data.text;
-            isMe = body.data.wasSentByApi || false;
+            console.log('[DEBUG] UazAPI Webhook Payload:', JSON.stringify(body));
+
+            // UazAPI can send 'message' or 'messages.upsert' depending on version
+            if (body.event === 'messages.upsert' && body.data) {
+                // Format v2 similar to Evolution
+                const msg = body.data.message || body.data;
+                remoteJid = body.data.key?.remoteJid || body.data.jid;
+                text = msg.conversation || msg.extendedTextMessage?.text || (typeof body.data.content === 'string' ? body.data.content : '');
+                isMe = body.data.key?.fromMe || false;
+            }
+            else if (body.type === 'message') {
+                // Legacy Format
+                remoteJid = body.data.from;
+                text = body.data.text;
+                isMe = body.data.wasSentByApi || false;
+            }
+            else {
+                // Unknown event or status update
+                return res.sendStatus(200);
+            }
         }
 
         if (isMe || !text) return res.sendStatus(200);
