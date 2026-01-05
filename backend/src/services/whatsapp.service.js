@@ -180,13 +180,16 @@ class WhatsAppService {
     /**
      * Get Connection Status
      */
+    /**
+     * Get Connection Status
+     */
     static async getStatus(instance) {
         try {
             const token = decrypt(instance.token);
             const baseUrl = instance.baseUrl.replace(/\/$/, '');
             const axiosConfig = { timeout: 5000 };
 
-            console.log(`[DEBUG] Checking Status for ${instance.instanceId}`);
+            console.log(`[DEBUG] Checking Status (GET /instance/status) for ${instance.instanceId}`);
 
             const adminToken = process.env.UAZ_ADMIN_TOKEN;
             const headers = {
@@ -195,44 +198,36 @@ class WhatsAppService {
                 'admintoken': adminToken // Add admin token for status checks
             };
 
-            // First, try the known working endpoint to see if it reports status
-            try {
-                const checkConnect = await axios.post(`${baseUrl}/instance/connect`, {
-                    instanceName: instance.instanceId
-                }, { headers, ...axiosConfig });
-
-                console.log(`[DEBUG] Status Check (POST /connect):`, JSON.stringify(checkConnect.data));
-                const s = checkConnect.data.instance?.state || checkConnect.data.state || checkConnect.data.status;
-                if (s === 'open' || s === 'connected') return 'connected';
-            } catch (e) { console.log(`[DEBUG] Status POST /connect failed: ${e.message}`); }
-
-            const endpoints = [
-                `/instance/connectionState/${instance.instanceId}`,
-                `/instance/status/${instance.instanceId}`,
-                `/instance/status?instanceId=${instance.instanceId}`
+            // User recommended: GET /instance/status
+            const statusEndpoints = [
+                // Most standard for v2
+                `/instance/status?instanceId=${instance.instanceId}`,
+                // Variations found in other UazAPI versions
+                `/instance/status?key=${instance.instanceId}`,
+                `/instance/status?id=${instance.instanceId}`,
+                // Fallback to path param
+                `/instance/status/${instance.instanceId}`
             ];
 
-            for (const endpoint of endpoints) {
+            for (const endpoint of statusEndpoints) {
                 try {
-                    // console.log(`[DEBUG] Probing Status: ${endpoint}`);
                     const response = await axios.get(`${baseUrl}${endpoint}`, {
-                        headers: { 'token': token, 'apikey': token },
+                        headers: headers,
                         ...axiosConfig
                     });
 
-                    console.log(`[DEBUG] Status Response (${endpoint}):`, JSON.stringify(response.data)); // <--- Log response
+                    console.log(`[DEBUG] Status Response (${endpoint}):`, JSON.stringify(response.data));
 
-                    // Normalize status
-                    const state = response.data.instance?.state || response.data.state || response.data.status;
-                    if (state === 'open' || state === 'connected') return 'connected';
-                    if (state === 'close' || state === 'disconnected') return 'disconnected';
-                    if (state === 'connecting') return 'connecting';
-
-                    if (response.data.instance?.status) return response.data.instance.status;
+                    // Check for "connected" or "open"
+                    const s = response.data.instance?.state || response.data.state || response.data.status;
+                    if (s === 'open' || s === 'connected') return 'connected';
+                    if (s === 'close' || s === 'disconnected') return 'disconnected';
+                    if (s === 'connecting') return 'connecting';
                 } catch (e) {
-                    console.log(`[DEBUG] Status Probe Failed (${endpoint}): ${e.response?.status || e.message}`);
+                    console.log(`[DEBUG] Status Probe Failed (${endpoint}): ${e.response?.status}`);
                 }
             }
+
             return 'disconnected';
         } catch (error) {
             console.error('[DEBUG] getStatus critical error:', error.message);
