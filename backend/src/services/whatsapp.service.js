@@ -75,10 +75,11 @@ class WhatsAppService {
                     instanceName: instanceName,
                     name: instanceName
                 }, {
-                }, {
                     headers: { 'admintoken': adminToken },
                     ...axiosConfig
                 });
+
+                console.log('[DEBUG] UazAPI Provision Response:', JSON.stringify(response.data, null, 2));
 
                 // UazAPI v2 returns { instance: { instanceName, ... }, hash: "..." } or { token: "..." }
                 const data = response.data;
@@ -109,8 +110,14 @@ class WhatsAppService {
 
             // Standardize: Both likely use Evolution endpoints logic
             // Try v2 endpoint matching
+            // Note: UazAPI might need 'token' header instead of 'apikey'
+            const headers = { 'apikey': token };
+            if (instance.provider === 'uazapi') {
+                headers['token'] = token; // Add token header for UazAPI just in case
+            }
+
             const response = await axios.get(`${baseUrl}/instance/connect/${instance.instanceId}`, {
-                headers: { 'apikey': token },
+                headers: headers,
                 ...axiosConfig
             });
 
