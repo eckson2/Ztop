@@ -219,7 +219,9 @@ class WhatsAppService {
                     console.log(`[DEBUG] Status Response (${endpoint}):`, JSON.stringify(response.data));
 
                     // Check for "connected" or "open"
-                    const s = response.data.instance?.state || response.data.state || response.data.status;
+                    // Log response structure shows: response.data.instance.status = "connected"
+                    const s = response.data.instance?.status || response.data.instance?.state || response.data.state || response.data.status;
+
                     if (s === 'open' || s === 'connected') return 'connected';
                     if (s === 'close' || s === 'disconnected') return 'disconnected';
                     if (s === 'connecting') return 'connecting';
