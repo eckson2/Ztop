@@ -28,7 +28,7 @@ const handleWebhook = async (req, res) => {
         if (user.status !== 'active') return res.sendStatus(200);
 
         // 2. Normalize Payload
-        let remoteJid, text, isMe;
+        let remoteJid, text, isMe, isGroup;
 
         if (user.whatsappInstance.provider === 'evolution') {
             const message = body.data;
@@ -36,6 +36,7 @@ const handleWebhook = async (req, res) => {
             remoteJid = message.key.remoteJid;
             text = message.message?.conversation || message.message?.extendedTextMessage?.text;
             isMe = message.key.fromMe;
+            isGroup = remoteJid && remoteJid.includes('@g.us'); // Evolution messages also need group check
         } else {
             console.log('[DEBUG] UazAPI Webhook Payload:', JSON.stringify(body));
 
@@ -46,6 +47,7 @@ const handleWebhook = async (req, res) => {
                 remoteJid = msg.chatid || msg.remoteJid;
                 text = msg.text || msg.content || msg.conversation;
                 isMe = msg.fromMe;
+                isGroup = msg.isGroup || (remoteJid && remoteJid.includes('@g.us'));
             }
             // V2 (Evolution-like wrapper)
             else if (body.event === 'messages.upsert' && body.data) {
@@ -54,12 +56,14 @@ const handleWebhook = async (req, res) => {
                 remoteJid = body.data.key?.remoteJid || body.data.jid;
                 text = msg.conversation || msg.extendedTextMessage?.text || (typeof body.data.content === 'string' ? body.data.content : '');
                 isMe = body.data.key?.fromMe || false;
+                isGroup = remoteJid && remoteJid.includes('@g.us');
             }
             else if (body.type === 'message') {
                 // Legacy Format
                 remoteJid = body.data.from;
                 text = body.data.text;
                 isMe = body.data.wasSentByApi || false;
+                isGroup = remoteJid && remoteJid.includes('@g.us');
             }
             else {
                 console.log('[DEBUG] Unknown Payload Format:', JSON.stringify(body));
@@ -67,7 +71,7 @@ const handleWebhook = async (req, res) => {
             }
         }
 
-        if (isMe || !text) return res.sendStatus(200);
+        if (isMe || !text || isGroup) return res.sendStatus(200);
 
         // 3. Log Inbound Message
         await MetricsService.logMessage(user.id, 'in');

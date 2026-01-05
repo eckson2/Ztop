@@ -57,7 +57,8 @@ class WhatsAppService {
                             webhookByEvents: true, // User enabled "Escutar eventos" manually
                             events: ['messages.upsert', 'messages', 'messages_update', 'message'],
                             addUrlEvents: false,
-                            addUrlTypesMessages: false
+                            addUrlTypesMessages: false,
+                            ignore: ['wasSentByApi', 'isGroupYes', 'fromMe'] // Filter at source
                         };
                         console.log('[DEBUG] Webhook Payload:', JSON.stringify(payload));
 
