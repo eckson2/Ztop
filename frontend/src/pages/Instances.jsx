@@ -17,7 +17,9 @@ const Instances = () => {
         try {
             const { data } = await api.get('/whatsapp');
             setInstance(data);
-            if (data.status === 'disconnected') fetchQr();
+            if (data.status === 'disconnected') {
+                // Do nothing, wait for user action
+            }
         } catch (e) {
             console.error(e);
         }
@@ -151,8 +153,12 @@ const Instances = () => {
                             </div>
                         ) : (
                             <div className="text-center">
-                                <RefreshCw size={40} className="animate-spin text-primary-500 mx-auto mb-4" />
-                                <p className="text-slate-400">Gerando QR Code...</p>
+                                <QrCode size={40} className="text-primary-500 mx-auto mb-4" />
+                                <h3 className="text-xl font-bold mb-2">Conectar Whatsapp</h3>
+                                <p className="text-slate-400 mb-6 max-w-xs mx-auto">Clique abaixo para gerar o QR Code e conectar seu aparelho.</p>
+                                <button onClick={fetchQr} className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-bold transition-all">
+                                    {loading ? 'Gerando...' : 'Gerar QR Code'}
+                                </button>
                             </div>
                         )}
                     </div>
