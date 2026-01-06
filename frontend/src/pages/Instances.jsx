@@ -11,6 +11,7 @@ const Instances = () => {
 
     const handleCreateInstance = async () => {
         setLoading(true);
+        setQr(null); // [FIX] Ensure clean state for new instance
         try {
             await api.post('/whatsapp', { provider });
             await loadInstance();
@@ -171,7 +172,11 @@ const Instances = () => {
                                     onClick={async () => {
                                         if (confirm('Isso irá desconectar o WhatsApp atual. Deseja continuar?')) {
                                             setLoading(true);
-                                            try { await api.delete('/whatsapp'); setInstance(null); } catch (e) { }
+                                            try {
+                                                await api.delete('/whatsapp');
+                                                setInstance(null);
+                                                setQr(null); // [FIX] Clear QR code on delete
+                                            } catch (e) { }
                                             setLoading(false);
                                         }
                                     }}
