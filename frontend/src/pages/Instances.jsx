@@ -202,7 +202,9 @@ const Instances = () => {
                                             <QRCodeSVG value={qr} size={256} className="rounded-xl" />
                                         )}
                                     </div>
-                                    <p className="text-slate-400 text-xs">Abra o WhatsApp > Aparelhos Conectados</p>
+                                    <p className="text-slate-400 text-xs text-center px-4">
+                                        Abra o WhatsApp &gt; Aparelhos Conectados &gt; Conectar Aparelho
+                                    </p>
                                 </div>
                             ) : (
                                 <div className="text-center">
