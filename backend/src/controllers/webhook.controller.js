@@ -31,6 +31,7 @@ const handleWebhook = async (req, res) => {
         let remoteJid, text, isMe, isGroup;
 
         if (user.whatsappInstance.provider === 'evolution') {
+            console.log('[DEBUG] Evolution Webhook Payload:', JSON.stringify(body, null, 2));
             const message = body.data;
             if (body.event !== 'MESSAGES_UPSERT') return res.sendStatus(200);
             remoteJid = message.key.remoteJid;
