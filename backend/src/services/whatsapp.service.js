@@ -281,12 +281,17 @@ class WhatsAppService {
             const axiosConfig = { timeout: 15000 }; // 15s timeout
 
             if (provider === 'evolution') {
-                // [EVOLUTION FIX] Verify if we should use a private internal URL (Docker Network)
-                const envUrl = process.env.EVOLUTION_PRIVATE_URL || process.env.EVOLUTION_URL;
-                const baseUrl = envUrl.replace(/\/$/, '');
-                const apiKey = process.env.EVOLUTION_API_KEY;
+                // [EVOLUTION FIX] Verify if we should use a private internal URL (Docker Network) - With Fallback
+                const envUrl = process.env.EVOLUTION_PRIVATE_URL || process.env.EVOLUTION_URL || 'https://evolution.ztop.dev.br';
 
-                console.log(`[DEBUG] Provisioning Evolution Instance: ${instanceName}`);
+                if (!envUrl) {
+                    throw new Error('CONFIG ERROR: "EVOLUTION_URL" is not defined in environment variables.');
+                }
+
+                const baseUrl = envUrl.replace(/\/$/, '');
+                const apiKey = process.env.EVOLUTION_API_KEY || 'B6D711FCDE4D4FD5936544120E713976'; // Fallback to provided key if missing
+
+                console.log(`[DEBUG] Provisioning Evolution Instance: ${instanceName} on ${baseUrl}`);
 
                 // Startegy 1: Evolution V2 (Standard)
                 try {
@@ -330,7 +335,10 @@ class WhatsAppService {
                 }
             }
             else if (provider === 'uazapi') {
-                const baseUrl = process.env.UAZ_URL.replace(/\/$/, '');
+                const uazUrl = process.env.UAZ_URL || 'https://uazapi.ztop.dev.br';
+                if (!uazUrl) throw new Error('CONFIG ERROR: "UAZ_URL" is missing.');
+
+                const baseUrl = uazUrl.replace(/\/$/, '');
                 const adminToken = process.env.UAZ_ADMIN_TOKEN;
 
                 console.log(`[DEBUG] Provisioning UazAPI Instance: ${instanceName}`);
