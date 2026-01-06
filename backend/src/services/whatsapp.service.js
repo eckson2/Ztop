@@ -138,7 +138,7 @@ class WhatsAppService {
                     mediatype: mediaType,
                     mimetype: mediaType === 'image' ? 'image/jpeg' : (mediaType === 'audio' ? 'audio/mpeg' : (mediaType === 'video' ? 'video/mp4' : 'application/pdf')),
                     media: url,
-                    caption: caption,
+                    caption: caption || '', // [FIX] Evolution requires string, cannot be null
                     fileName: fileName
                 }, { headers });
             } else if (instance.provider === 'uazapi') {
