@@ -12,13 +12,20 @@ const handleWebhook = async (req, res) => {
         const body = req.body;
 
         // 1. Identify User and Configs
+        console.log(`[DEBUG] Incoming Webhook for User ${userId}`);
+
         const user = await prisma.user.findUnique({
             where: { id: userId },
             include: { botConfig: true, whatsappInstance: true }
         });
 
-        if (!user || user.webhookToken !== token) {
-            return res.sendStatus(200); // Silent ignore/unauthorized
+        if (!user) {
+            console.log(`[DEBUG] User ${userId} not found`);
+            return res.sendStatus(200);
+        }
+        if (user.webhookToken !== token) {
+            console.log(`[DEBUG] Token mismatch for user ${userId}. Expected: ${user.webhookToken}, Got: ${token}`);
+            return res.sendStatus(200);
         }
 
         if (!user.botConfig || !user.whatsappInstance) {
