@@ -13,6 +13,7 @@ const AutoTest = () => {
         isEnabled: false,
         panelType: 'sigma',
         apiUrl: '',
+        nameField: 'Tops',
         templateFields: {
             username: true,
             password: true,
@@ -150,8 +151,8 @@ const AutoTest = () => {
                                             key={type}
                                             onClick={() => setConfig({ ...config, panelType: type })}
                                             className={`p-3 rounded-xl border transition-all capitalized flex flex-col items-center gap-2 ${config.panelType === type
-                                                    ? 'bg-primary-500/20 border-primary-500 text-white'
-                                                    : 'bg-black/20 border-white/5 text-slate-400 hover:bg-white/5'
+                                                ? 'bg-primary-500/20 border-primary-500 text-white'
+                                                : 'bg-black/20 border-white/5 text-slate-400 hover:bg-white/5'
                                                 }`}
                                         >
                                             <Globe size={18} />
@@ -175,17 +176,21 @@ const AutoTest = () => {
                             </div>
 
                             {/* Fields */}
+                            {/* Fields */}
                             <div>
                                 <label className="block text-sm font-medium text-slate-400 mb-3">Campos na Resposta</label>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    {/* Nome (Manual) - Hardcoded description as per user request */}
-                                    <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 opacity-50 cursor-not-allowed">
-                                        <div className="w-5 h-5 rounded border border-slate-500 bg-slate-500 flex items-center justify-center">
-                                            <CheckCircle size={14} className="text-black" />
-                                        </div>
-                                        <span className="text-slate-400">Nome (Fixo: Tops)</span>
+                                    {/* Nome (Manual) - Now Customizable */}
+                                    <div className="flex flex-col gap-1 p-3 rounded-xl bg-black/20 border border-white/5">
+                                        <label className="text-xs text-slate-400 font-medium ml-1">Nome do Estabelecimento</label>
+                                        <input
+                                            type="text"
+                                            value={config.nameField}
+                                            onChange={(e) => setConfig({ ...config, nameField: e.target.value })}
+                                            placeholder="Ex: Tops IPTV"
+                                            className="bg-transparent border-none text-white focus:ring-0 p-0 placeholder:text-slate-600"
+                                        />
                                     </div>
-
                                     {Object.keys(config.templateFields).map((field) => (
                                         <label key={field} className="flex items-center gap-3 p-3 rounded-xl bg-black/20 border border-white/5 cursor-pointer hover:bg-white/5 transition-colors">
                                             <input

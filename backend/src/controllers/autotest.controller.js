@@ -15,6 +15,7 @@ const getConfig = async (req, res) => {
                 data: {
                     userId,
                     panelType: 'sigma',
+                    nameField: 'Tops',
                     templateFields: JSON.stringify({
                         username: true,
                         password: true,
@@ -38,7 +39,7 @@ const getConfig = async (req, res) => {
 const updateConfig = async (req, res) => {
     try {
         const userId = req.userId;
-        const { isEnabled, panelType, apiUrl, templateFields } = req.body;
+        const { isEnabled, panelType, apiUrl, nameField, templateFields } = req.body;
 
         const config = await prisma.autoTestConfig.upsert({
             where: { userId },
@@ -46,6 +47,7 @@ const updateConfig = async (req, res) => {
                 isEnabled,
                 panelType,
                 apiUrl,
+                nameField,
                 templateFields: typeof templateFields === 'string' ? templateFields : JSON.stringify(templateFields)
             },
             create: {
@@ -53,6 +55,7 @@ const updateConfig = async (req, res) => {
                 isEnabled,
                 panelType,
                 apiUrl,
+                nameField,
                 templateFields: typeof templateFields === 'string' ? templateFields : JSON.stringify(templateFields)
             }
         });

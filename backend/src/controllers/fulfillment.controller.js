@@ -56,12 +56,8 @@ const handleFulfillment = async (req, res) => {
         // Build Response
         let responseLines = [];
 
-        // Always show "Nome" (as requested by user logic, though not in DB config, it's static/manual usually or hardcoded for now)
-        // The user said "Nome: Tops" hardcoded, but also "campo nome deverá o usuario preencher manualmente". 
-        // For now I will keep "Nome: Tops" or generic, but ideally this "Nome" should probably be in the DB too.
-        // I'll leave "Nome: Tops" as standard header for now based on previous request or maybe just omit if not requested?
-        // Let's assume standard header.
-        responseLines.push('Nome: Tops');
+        // Show Name (Customizable)
+        responseLines.push(`Nome: ${config.nameField || 'Tops'}`);
 
         if (fields.username) responseLines.push(`✅ Usuário: ${data.username || data.usuario || 'N/A'}`);
         if (fields.password) responseLines.push(`✅ Senha: ${data.password || data.senha || 'N/A'}`);

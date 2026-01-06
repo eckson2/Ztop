@@ -34,6 +34,7 @@ model AutoTestConfig {
   isEnabled      Boolean  @default(false)
   panelType      String   @default("sigma") // sigma, pfast, koffice, warez
   apiUrl         String   @default("")
+  nameField      String   @default("Tops")
   
   // Stores which fields are enabled to show: { username: true, password: true, dns: true, ... }
   templateFields String   @default("{}") 
