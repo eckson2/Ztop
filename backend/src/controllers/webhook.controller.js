@@ -8,7 +8,13 @@ const MetricsService = require('../services/metrics.service');
 const handleWebhook = async (req, res) => {
     try {
         const { userId } = req.params;
-        const { token } = req.query;
+        let { token } = req.query;
+
+        // [EVOLUTION FIX] Strip event name if appended to token (e.g., token=XYZ/messages-upsert)
+        if (token && token.includes('/')) {
+            token = token.split('/')[0];
+        }
+
         const body = req.body;
 
         // 1. Identify User and Configs
