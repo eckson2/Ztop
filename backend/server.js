@@ -38,6 +38,7 @@ const botRoutes = require('./src/routes/bot.routes');
 const waRoutes = require('./src/routes/whatsapp.routes');
 const webhookRoutes = require('./src/routes/webhook.routes');
 const fulfillmentRoutes = require('./src/routes/fulfillment.routes'); // [NEW] Dialogflow Fulfillment
+const autotestRoutes = require('./src/routes/autotest.routes'); // [NEW] AutoTest Config
 const adminRoutes = require('./src/routes/admin.routes');
 const metricsRoutes = require('./src/routes/metrics.routes');
 
@@ -45,7 +46,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/bots', botRoutes);
 app.use('/api/whatsapp', waRoutes);
 app.use('/api/webhook', webhookRoutes);
-app.use('/api/fulfillment', fulfillmentRoutes); // [NEW] Endpoint: /api/fulfillment
+app.use('/api/fulfillment', fulfillmentRoutes);
+app.use('/api/autotest', autotestRoutes); // [NEW] Endpoint
 app.use('/api/admin', adminRoutes);
 app.use('/api/metrics', metricsRoutes);
 
