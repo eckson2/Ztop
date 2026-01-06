@@ -62,9 +62,9 @@ const handleFulfillment = async (req, res) => {
         if (fields.username) responseLines.push(`✅ Usuário: ${data.username || data.usuario || 'N/A'}`);
         if (fields.password) responseLines.push(`✅ Senha: ${data.password || data.senha || 'N/A'}`);
         if (fields.dns) responseLines.push(`🌐 DNS: ${data.dns || 'N/A'}`);
-        if (fields.plano) responseLines.push(`📦 Plano: ${data.Plano || data.plano || 'N/A'}`);
-        if (fields.vencimento) responseLines.push(`🗓️ Vencimento: ${data.Vencimento || data.vencimento || 'N/A'}`);
-        if (fields.pagamento) responseLines.push(`💳 Assinar/Renovar Plano: ${data['Pagamento Automatico'] || data.pagamento_automatico || 'N/A'}`);
+        if (fields.plano) responseLines.push(`📦 Plano: ${data.package || data.Plano || data.plano || 'N/A'}`);
+        if (fields.vencimento) responseLines.push(`🗓️ Vencimento: ${data.expiresAtFormatted || data.Vencimento || data.vencimento || 'N/A'}`);
+        if (fields.pagamento) responseLines.push(`💳 Assinar/Renovar Plano: ${data.payUrl || data['Pagamento Automatico'] || data.pagamento_automatico || 'N/A'}`);
 
         const responseText = responseLines.join('\n');
 
