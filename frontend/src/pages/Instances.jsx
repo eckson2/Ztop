@@ -199,7 +199,7 @@ const Instances = () => {
                     </div>
 
                     {/* EVOLUTION SETTINGS (Only Visible When Connected) */}
-                    {instance.provider === 'evolution' && instance.status === 'connected' && (
+                    {(instance.provider?.toLowerCase() === 'evolution') && instance.status === 'connected' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
                             {/* Behavior Settings */}
                             <div className="glass p-8 rounded-3xl">
@@ -231,32 +231,54 @@ const Instances = () => {
                                         </div>
                                     )}
 
-                                    <label className="flex items-center justify-between p-4 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
-                                        <span className="font-medium text-slate-300">Ignorar Grupos</span>
-                                        <input
-                                            type="checkbox"
-                                            className="w-5 h-5 accent-primary-500"
-                                            checked={evoSettings.ignoreGroups}
-                                            onChange={e => setEvoSettings({ ...evoSettings, ignoreGroups: e.target.checked })}
-                                        />
-                                    </label>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <label className="flex flex-col gap-2 p-4 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
+                                            <span className="font-medium text-slate-300 text-sm">Ignorar Grupos</span>
+                                            <input
+                                                type="checkbox"
+                                                className="w-5 h-5 accent-primary-500"
+                                                checked={evoSettings.ignoreGroups}
+                                                onChange={e => setEvoSettings({ ...evoSettings, ignoreGroups: e.target.checked })}
+                                            />
+                                        </label>
 
-                                    <label className="flex items-center justify-between p-4 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
-                                        <span className="font-medium text-slate-300">Sempre Online</span>
-                                        <input
-                                            type="checkbox"
-                                            className="w-5 h-5 accent-primary-500"
-                                            checked={evoSettings.alwaysOnline}
-                                            onChange={e => setEvoSettings({ ...evoSettings, alwaysOnline: e.target.checked })}
-                                        />
-                                    </label>
+                                        <label className="flex flex-col gap-2 p-4 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
+                                            <span className="font-medium text-slate-300 text-sm">Sempre Online</span>
+                                            <input
+                                                type="checkbox"
+                                                className="w-5 h-5 accent-primary-500"
+                                                checked={evoSettings.alwaysOnline}
+                                                onChange={e => setEvoSettings({ ...evoSettings, alwaysOnline: e.target.checked })}
+                                            />
+                                        </label>
+                                    </div>
 
-                                    <button
-                                        onClick={saveEvoSettings}
-                                        className="w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl font-bold transition-all text-primary-400 border border-primary-500/20"
-                                    >
-                                        Salvar Comportamento
-                                    </button>
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={saveEvoSettings}
+                                            className="flex-1 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-bold transition-all text-primary-400 border border-primary-500/20"
+                                        >
+                                            Salvar Comportamento
+                                        </button>
+
+                                        {/* Force Webhook Button */}
+                                        <button
+                                            onClick={async () => {
+                                                if (confirm('Isso vai re-configurar a URL de webhook na Evolution. Deseja prosseguir?')) {
+                                                    setLoading(true);
+                                                    try {
+                                                        await api.post('/whatsapp/webhook');
+                                                        alert('Webhook re-sincronizado com sucesso!');
+                                                    } catch (e) { alert('Erro ao configurar webhook: ' + e.message); }
+                                                    setLoading(false);
+                                                }
+                                            }}
+                                            className="px-4 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 rounded-xl border border-orange-500/20"
+                                            title="Forçar Webhook"
+                                        >
+                                            <RefreshCw size={20} />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
