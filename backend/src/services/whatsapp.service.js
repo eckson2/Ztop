@@ -405,30 +405,83 @@ class WhatsAppService {
     /**
      * Get Connection Status
      */
+    /**
+     * Update Evolution Instance Settings (Reject Call, Groups, etc)
+     */
+    static async updateEvolutionSettings(instance, settings) {
+        try {
+            const token = decrypt(instance.token);
+            const baseUrl = instance.baseUrl.replace(/\/$/, '');
+            const headers = { 'apikey': token };
+
+            console.log(`[DEBUG] Updating Settings for ${instance.instanceId}:`, settings);
+
+            // Evolution v2: /settings/set/{instance}
+            // Mapped settings: reject_call, msg_call, groups_ignore, always_online
+            await axios.post(`${baseUrl}/settings/set/${instance.instanceId}`, {
+                reject_call: settings.rejectCall,
+                msg_call: settings.rejectMessage || '',
+                groups_ignore: settings.ignoreGroups,
+                always_online: settings.alwaysOnline || false
+            }, { headers });
+
+            return true;
+        } catch (error) {
+            console.error('[DEBUG] Failed to update settings:', error.message);
+            throw new Error('Falha ao atualizar configurações.');
+        }
+    }
+
+    /**
+     * Update Evolution Typebot Integration
+     */
+    static async updateEvolutionTypebot(instance, typebotData) {
+        try {
+            const token = decrypt(instance.token);
+            const baseUrl = instance.baseUrl.replace(/\/$/, '');
+            const headers = { 'apikey': token };
+
+            console.log(`[DEBUG] Updating Typebot for ${instance.instanceId}`);
+
+            // Evolution v2: /typebot/set/{instance}
+            await axios.post(`${baseUrl}/typebot/set/${instance.instanceId}`, {
+                enabled: typebotData.enabled,
+                url: typebotData.url,
+                typebot: typebotData.flowName,
+                expire: 20, // session expiration in mins
+                keyword_finish: '#SAIR',
+                delay_message: 1000,
+                unknown_message: 'Mensagem não reconhecida',
+                listening_from_me: false
+            }, { headers });
+
+            return true;
+        } catch (error) {
+            console.error('[DEBUG] Failed to set Typebot:', error.message);
+            throw new Error('Falha ao configurar Typebot.');
+        }
+    }
+
+    /**
+     * Get Connection Status
+     */
     static async getStatus(instance) {
         try {
             const token = decrypt(instance.token);
             const baseUrl = instance.baseUrl.replace(/\/$/, '');
             const axiosConfig = { timeout: 5000 };
 
-            console.log(`[DEBUG] Checking Status (GET /instance/status) for ${instance.instanceId}`);
+            console.log(`[DEBUG] Checking Status for ${instance.instanceId}`);
 
-            // headers same as getConnectData for consistency (it works there)
             const headers = {
                 'token': token,
                 'apikey': token,
-                'admintoken': token // Use instance token here too as it works for other endpoints
+                'admintoken': token
             };
 
-            // User recommended: GET /instance/status
             const statusEndpoints = [
-                // Most standard for v2
-                `/instance/status?instanceId=${instance.instanceId}`,
-
-                // Commented out to reduce noise, enable if needed
-                // `/instance/status?key=${instance.instanceId}`,
-                // `/instance/status?id=${instance.instanceId}`,
-                // `/instance/status/${instance.instanceId}`
+                `/instance/connectionState/${instance.instanceId}`, // Evolution v2 Standard
+                `/instance/status?instanceId=${instance.instanceId}`, // UazAPI / Others
             ];
 
             for (const endpoint of statusEndpoints) {
@@ -438,17 +491,20 @@ class WhatsAppService {
                         ...axiosConfig
                     });
 
+                    // Evolution v2 response: { instance: { state: "open" } }
+                    // UazAPI response: { instance: { status: "connected" } }
                     console.log(`[DEBUG] Status Response (${endpoint}):`, JSON.stringify(response.data));
 
-                    // Check for "connected" or "open"
-                    // Log response structure shows: response.data.instance.status = "connected"
-                    const s = response.data.instance?.status || response.data.instance?.state || response.data.state || response.data.status;
+                    const s = response.data.instance?.state ||
+                        response.data.instance?.status ||
+                        response.data.state ||
+                        response.data.status;
 
                     if (s === 'open' || s === 'connected') return 'connected';
                     if (s === 'close' || s === 'disconnected') return 'disconnected';
                     if (s === 'connecting') return 'connecting';
                 } catch (e) {
-                    console.log(`[DEBUG] Status Probe Failed (${endpoint}): ${e.response?.status}`);
+                    // ignore failures on alternative endpoints
                 }
             }
 
