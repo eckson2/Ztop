@@ -30,7 +30,6 @@ class DialogflowService {
 
             const intentResponse = await sessionClient.detectIntent(request);
             const result = intentResponse[0].queryResult;
-            console.log('[DEBUG] Dialogflow Query Result:', JSON.stringify(result, null, 2));
 
             // Extract fulfillment messages (can be multiple)
             const responses = [];
