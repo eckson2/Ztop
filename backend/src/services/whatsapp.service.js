@@ -217,7 +217,6 @@ class WhatsAppService {
         try {
             const axiosConfig = { timeout: 15000 }; // 15s timeout
 
-/*
             if (provider === 'evolution') {
                 const baseUrl = process.env.EVOLUTION_URL.replace(/\/$/, '');
                 const apiKey = process.env.EVOLUTION_API_KEY;
@@ -240,7 +239,7 @@ class WhatsAppService {
                     token: data.token || data.apikey || apiKey
                 };
             }
-            else */ if (provider === 'uazapi') {
+            else if (provider === 'uazapi') {
                 const baseUrl = process.env.UAZ_URL.replace(/\/$/, '');
                 const adminToken = process.env.UAZ_ADMIN_TOKEN;
 
