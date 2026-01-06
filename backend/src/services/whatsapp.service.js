@@ -89,8 +89,9 @@ class WhatsAppService {
                 await axios.post(`${baseUrl}/webhook/set/${instance.instanceId}`, {
                     enabled: enabled,
                     url: finalWebhookUrl,
-                    webhookByEvents: true,
-                    events: ['MESSAGES_UPSERT']
+                    webhook_by_events: true, // snake_case for v2
+                    webhookByEvents: true,   // camelCase fallback
+                    events: ['MESSAGES_UPSERT', 'MESSAGES_UPDATE', 'MESSAGES_DELETE', 'SEND_MESSAGE']
                 }, { headers });
             }
             console.log('[DEBUG] Webhook set successfully');
