@@ -281,6 +281,7 @@ const Instances = () => {
                                         </button>
 
                                         {/* Force Webhook Button */}
+                                        {/* Force Webhook Button */}
                                         <button
                                             onClick={async () => {
                                                 if (confirm('Isso vai re-configurar a URL de webhook na Evolution. Deseja prosseguir?')) {
@@ -292,10 +293,11 @@ const Instances = () => {
                                                     setLoading(false);
                                                 }
                                             }}
-                                            className="px-4 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 rounded-xl border border-orange-500/20"
+                                            className="px-6 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 rounded-xl border border-orange-500/20 font-bold flex items-center gap-2"
                                             title="Forçar Webhook"
                                         >
                                             <RefreshCw size={20} />
+                                            Sincronizar Webhook
                                         </button>
                                     </div>
                                 </div>
