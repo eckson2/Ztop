@@ -44,7 +44,7 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <StatsCard label="Mensagens Recebidas" value={metrics.in || 0} />
           <StatsCard label="Mensagens Enviadas" value={metrics.out || 0} />
-          <StatsCard label="Limite Mensal" value="1.000" color="text-primary-400" />
+          <StatsCard label="Limite Mensal" value="Ilimitado" color="text-emerald-400" />
         </div>
       )}
     </div>
