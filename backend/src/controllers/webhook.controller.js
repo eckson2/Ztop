@@ -114,28 +114,4 @@ const handleWebhook = async (req, res) => {
     }
 };
 
-const updateSettings = async (req, res) => {
-    try {
-        const instance = await prisma.whatsAppInstance.findUnique({ where: { userId: req.userId } });
-        if (!instance) return res.status(404).json({ error: 'Instância não encontrada' });
-
-        await WhatsAppService.updateEvolutionSettings(instance, req.body);
-        res.json({ message: 'Configurações atualizadas!' });
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
-};
-
-const updateTypebot = async (req, res) => {
-    try {
-        const instance = await prisma.whatsAppInstance.findUnique({ where: { userId: req.userId } });
-        if (!instance) return res.status(404).json({ error: 'Instância não encontrada' });
-
-        await WhatsAppService.updateEvolutionTypebot(instance, req.body);
-        res.json({ message: 'Typebot configurado!' });
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
-};
-
-module.exports = { getInstance, saveInstance, getConnectQR, configureWebhook, deleteInstance, updateSettings, updateTypebot, handleWebhook };
+module.exports = { handleWebhook };

@@ -9,4 +9,8 @@ router.get('/qr', authMiddleware, whatsappController.getConnectQR);
 router.post('/webhook', authMiddleware, whatsappController.configureWebhook); // Manual trigger
 router.delete('/', authMiddleware, whatsappController.deleteInstance); // Reset / Disconnect
 
+// Evolution Specific Routes
+router.post('/settings', authMiddleware, whatsappController.updateSettings);
+router.post('/typebot', authMiddleware, whatsappController.updateTypebot);
+
 module.exports = router;
