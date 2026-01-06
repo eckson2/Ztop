@@ -12,7 +12,7 @@ const handleFulfillment = async (req, res) => {
         console.log(`[FULFILLMENT] Processing intent: ${intentName}`);
 
         // Call MaxStreaming API
-        const apiUrl = 'https://maxstreaming.qpanel.top/api/chatbot/RYAWRk1jlx/o231qzL4qz';
+        const apiUrl = 'https://maxstreaming.sigma.st/api/chatbot/RYAWRk1jlx/o231qzL4qz';
 
         console.log('[FULFILLMENT] Calling MaxStreaming API...');
         const apiResponse = await axios.post(apiUrl, {}, {
