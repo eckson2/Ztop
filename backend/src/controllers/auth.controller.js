@@ -39,6 +39,18 @@ const login = async (req, res) => {
             return res.status(401).json({ error: 'Credenciais inválidas' });
         }
 
+        // Check if Admin Blocked
+        if (user.isAdminBlocked) {
+            console.log(`[AUTH] Blocked user: ${email}`);
+            return res.status(403).json({ error: 'Acesso bloqueado pelo administrador.' });
+        }
+
+        // Check Expiration Date
+        if (user.expirationDate && new Date() > new Date(user.expirationDate)) {
+            console.log(`[AUTH] Expired user: ${email}`);
+            return res.status(403).json({ error: 'Sua assinatura expirou. Entre em contato com o suporte.' });
+        }
+
         if (user.status !== 'active') {
             console.log(`[AUTH] Inactive user: ${email}`);
             return res.status(403).json({ error: 'Usuário inativo' });

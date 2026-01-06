@@ -14,6 +14,8 @@ model User {
   passwordHash  String
   status        String   @default("active") // active, inactive
   role          String   @default("USER")   // ADMIN, USER
+  isAdminBlocked Boolean @default(false)
+  expirationDate DateTime?
   plan          String   @default("free")   // free, pro, enterprise
   webhookToken  String   @unique @default(uuid())
   createdAt     DateTime @default(now())
