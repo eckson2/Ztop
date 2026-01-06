@@ -36,6 +36,10 @@ model AutoTestConfig {
   apiUrl         String   @default("")
   nameField      String   @default("Tops")
   
+  // Pfast Config
+  pfastToken     String   @default("")
+  pfastSecret    String   @default("")
+  
   // Stores which fields are enabled to show: { username: true, password: true, dns: true, ... }
   templateFields String   @default("{}") 
   
