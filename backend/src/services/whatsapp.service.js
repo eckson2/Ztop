@@ -286,56 +286,104 @@ class WhatsAppService {
                 const baseUrl = envUrl.replace(/\/$/, '');
                 const apiKey = process.env.EVOLUTION_API_KEY;
 
-                console.log(`Creating Evolution Instance: ${baseUrl}/instance/create`);
+                console.log(`[DEBUG] Provisioning Evolution Instance: ${instanceName}`);
 
-                // Evolution v2 Payload Fix:
-                // Removed webhook_wa_business (can cause 'Invalid integration' in some v2 builds)
-                // Kept minimal fields
-                const payload = {
-                    instanceName: instanceName,
-                    qrcode: true,
-                    integration: 'WHATSAPP-BAILEYS' // Explicitly setting default integration
-                };
+                // Startegy 1: Evolution V2 (Standard)
+                try {
+                    console.log(`[DEBUG] Evolution Strategy 1: POST /instance/create (V2 Payload)`);
+                    const payload = {
+                        instanceName: instanceName,
+                        qrcode: true,
+                        integration: 'WHATSAPP-BAILEYS'
+                    };
+                    const response = await axios.post(`${baseUrl}/instance/create`, payload, {
+                        headers: { 'apikey': apiKey },
+                        ...axiosConfig
+                    });
+                    const data = response.data.instance || response.data;
+                    return {
+                        baseUrl,
+                        instanceId: data.instanceName || instanceName,
+                        token: data.token || data.apikey || apiKey
+                    };
+                } catch (e) {
+                    console.log(`[DEBUG] Evolution Strategy 1 Failed: ${e.response?.status} - ${JSON.stringify(e.response?.data)}`);
+                }
 
-                const response = await axios.post(`${baseUrl}/instance/create`, payload, {
-                    headers: { 'apikey': apiKey },
-                    ...axiosConfig
-                });
-
-                const data = response.data.instance || response.data;
-                return {
-                    baseUrl,
-                    instanceId: data.instanceName || instanceName,
-                    token: data.token || data.apikey || apiKey
-                };
+                // Strategy 2: Legacy / Minimal (V1 or simple V2 fallback)
+                try {
+                    console.log(`[DEBUG] Evolution Strategy 2: POST /instance/create (Minimal Payload)`);
+                    const payload = { instanceName: instanceName };
+                    const response = await axios.post(`${baseUrl}/instance/create`, payload, {
+                        headers: { 'apikey': apiKey },
+                        ...axiosConfig
+                    });
+                    const data = response.data.instance || response.data;
+                    return {
+                        baseUrl,
+                        instanceId: data.instanceName || instanceName,
+                        token: data.token || data.apikey || apiKey
+                    };
+                } catch (e) {
+                    console.log(`[DEBUG] Evolution Strategy 2 Failed: ${e.response?.status}`);
+                    throw e; // If both fail, throw the last error
+                }
             }
             else if (provider === 'uazapi') {
                 const baseUrl = process.env.UAZ_URL.replace(/\/$/, '');
                 const adminToken = process.env.UAZ_ADMIN_TOKEN;
 
-                console.log(`Creating UazAPI Instance (v2): ${baseUrl}/instance/init`);
-                console.log('Payload being sent:', { instanceName, name: instanceName });
+                console.log(`[DEBUG] Provisioning UazAPI Instance: ${instanceName}`);
 
-                // UazAPI v2 uses /instance/init and 'admintoken' header
-                // Sending both keys to ensure compatibility
-                const response = await axios.post(`${baseUrl}/instance/init`, {
-                    instanceName: instanceName,
-                    name: instanceName,
-                    qrcode: true // Force QR generation flag
-                }, {
-                    headers: { 'admintoken': adminToken },
-                    ...axiosConfig
-                });
+                // Strategy 1: UazAPI V2 (Go) - /instance/init
+                let strategy1Error = null;
+                try {
+                    console.log(`[DEBUG] UazAPI Strategy 1: POST /instance/init`);
+                    const response = await axios.post(`${baseUrl}/instance/init`, {
+                        instanceName: instanceName,
+                        token: instanceName,
+                        qrcode: true
+                    }, {
+                        headers: {
+                            'admintoken': adminToken,
+                            'Authorization': `Bearer ${adminToken}`
+                        },
+                        ...axiosConfig
+                    });
+                    console.log('[DEBUG] UazAPI Strategy 1 Success');
+                    const data = response.data;
+                    return {
+                        baseUrl,
+                        instanceId: data.instance?.instanceName || instanceName,
+                        token: data.hash || data.token || data.instance?.token
+                    };
+                } catch (e) {
+                    console.log(`[DEBUG] UazAPI Strategy 1 Failed: ${e.response?.status}`);
+                    strategy1Error = e;
+                }
 
-                console.log('[DEBUG] UazAPI Provision Response:', JSON.stringify(response.data, null, 2));
-
-                // UazAPI v2 returns { instance: { instanceName, ... }, hash: "..." } or { token: "..." }
-                const data = response.data;
-                return {
-                    baseUrl,
-                    instanceId: data.instance?.instanceName || instanceName,
-                    token: data.hash || data.token || data.instance?.token
-                };
+                // Strategy 2: UazAPI V1 (Node) - /instance/create
+                try {
+                    console.log(`[DEBUG] UazAPI Strategy 2: POST /instance/create`);
+                    const response = await axios.post(`${baseUrl}/instance/create`, {
+                        instanceName: instanceName
+                    }, {
+                        headers: { 'admintoken': adminToken },
+                        ...axiosConfig
+                    });
+                    console.log('[DEBUG] UazAPI Strategy 2 Success');
+                    const data = response.data;
+                    return {
+                        baseUrl,
+                        instanceId: data.instance?.instanceName || instanceName,
+                        token: data.hash || data.token || data.instance?.token
+                    };
+                } catch (e) {
+                    console.log(`[DEBUG] UazAPI Strategy 2 Failed: ${e.response?.status}`);
+                    // If Strategy 1 failed with 400/500 (not 404), it might be the right endpoint but wrong payload.
+                    // But usually logging both helps. Throwing the last error or the first if it was more "relevant".
+                    throw strategy1Error || e;
+                }
             }
             throw new Error('Provedor não suportado');
         } catch (error) {
@@ -343,7 +391,7 @@ class WhatsAppService {
             // Return more user-friendly error
             if (error.code === 'ETIMEDOUT') throw new Error('Timeout: O servidor não conseguiu conectar na API do WhatsApp. Verifique a URL.');
             if (error.response?.status === 401) throw new Error('Erro de Autenticação: Verifique sua API Key / Token.');
-            throw new Error(error.response?.data?.error || error.response?.data?.message || 'Falha na comunicação com a API');
+            throw new Error(error.response?.data?.error || error.message || 'Falha na comunicação com a API');
         }
     }
 
