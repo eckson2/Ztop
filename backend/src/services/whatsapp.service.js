@@ -128,12 +128,17 @@ class WhatsAppService {
             if (instance.provider === 'evolution') {
                 // Evolution API: /message/sendMedia/{instance}
                 const mediaType = type === 'unknown' ? 'document' : type; // active backup
+
+                // [FIX] Evolution often requires fileName
+                const fileName = url.split('/').pop().split('?')[0] || `file.${type === 'audio' ? 'mp3' : 'jpg'}`;
+
                 await axios.post(`${baseUrl}/message/sendMedia/${instance.instanceId}`, {
                     number: number,
                     mediaMessage: {
                         mediatype: mediaType,
                         media: url,
-                        caption: caption
+                        caption: caption,
+                        fileName: fileName
                     }
                 }, { headers });
             } else if (instance.provider === 'uazapi') {
@@ -148,7 +153,7 @@ class WhatsAppService {
                 await axios.post(`${baseUrl}/send/media`, payload, { headers });
             }
         } catch (error) {
-            console.error(`WhatsApp Media Error (${instance.provider}):`, error.response?.data || error.message);
+            console.error(`WhatsApp Media Error (${instance.provider}):`, JSON.stringify(error.response?.data || error.message, null, 2));
         }
     }
 
