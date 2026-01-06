@@ -263,11 +263,16 @@ class WhatsAppService {
 
                 console.log(`Creating Evolution Instance: ${baseUrl}/instance/create`);
 
-                const response = await axios.post(`${baseUrl}/instance/create`, {
+                // Evolution v2 Payload Fix:
+                // Removed webhook_wa_business (can cause 'Invalid integration' in some v2 builds)
+                // Kept minimal fields
+                const payload = {
                     instanceName: instanceName,
                     qrcode: true,
-                    webhook_wa_business: false
-                }, {
+                    integration: 'WHATSAPP-BAILEYS' // Explicitly setting default integration
+                };
+
+                const response = await axios.post(`${baseUrl}/instance/create`, payload, {
                     headers: { 'apikey': apiKey },
                     ...axiosConfig
                 });
