@@ -140,7 +140,9 @@ const deleteInstance = async (req, res) => {
 
         if (instance) {
             // Optional: Try to delete from provider (fire and forget)
-            // try { await WhatsAppService.deleteInstance(instance); } catch (e) {}
+            try { await WhatsAppService.deleteInstance(instance); } catch (e) {
+                console.error('Delete Provider Error:', e.message);
+            }
 
             await prisma.whatsAppInstance.delete({
                 where: { userId: req.userId }
