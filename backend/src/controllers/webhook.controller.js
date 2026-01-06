@@ -68,6 +68,11 @@ const handleWebhook = async (req, res) => {
         } else {
             console.log('[DEBUG] UazAPI Webhook Payload:', JSON.stringify(body));
 
+            // [FIX] Ignore status updates/read receipts to prevent log spam
+            if (body.EventType === 'messages_update' || body.type === 'ReadReceipt' || body.event?.Type === 'Read' || body.event?.Type === 'Delivered') {
+                return res.sendStatus(200);
+            }
+
             // UazAPI can send 'message' or 'messages.upsert' depending on version
             // V3 / Universal Format (seen in logs)
             if (body.message && (body.EventType === 'messages' || !body.event)) {
