@@ -29,8 +29,11 @@ const handleWebhook = async (req, res) => {
             console.log(`[DEBUG] User ${userId} not found`);
             return res.sendStatus(200);
         }
-        if (user.webhookToken !== token) {
-            console.log(`[DEBUG] Token mismatch for user ${userId}. Expected: ${user.webhookToken}, Got: ${token}`);
+
+        // [AUTH FIX] Use startsWith to handle Evolution appending /event-name to token
+        // e.g. token=XYZ becomes token=XYZ/messages-upsert
+        if (!token || !token.startsWith(user.webhookToken)) {
+            console.log(`[DEBUG] Token mismatch for user ${userId}. Expected starts with: ${user.webhookToken}, Got: ${token}`);
             return res.sendStatus(200);
         }
 
@@ -44,9 +47,20 @@ const handleWebhook = async (req, res) => {
         let remoteJid, text, isMe, isGroup;
 
         if (user.whatsappInstance.provider === 'evolution') {
-            console.log('[DEBUG] Evolution Webhook Payload:', JSON.stringify(body, null, 2));
+            console.log(`[DEBUG] Evolution Event: ${body.event}`);
+
+            // support various event casings
+            const allowedEvents = ['MESSAGES_UPSERT', 'messages.upsert', 'messages_upsert'];
+            if (!allowedEvents.includes(body.event)) return res.sendStatus(200);
+
             const message = body.data;
-            if (body.event !== 'MESSAGES_UPSERT') return res.sendStatus(200);
+
+            // Check if it's a valid message object
+            if (!message || !message.key) {
+                console.log('[DEBUG] Evolution: No message key found in data');
+                return res.sendStatus(200);
+            }
+
             remoteJid = message.key.remoteJid;
             text = message.message?.conversation || message.message?.extendedTextMessage?.text;
             isMe = message.key.fromMe;
