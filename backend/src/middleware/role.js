@@ -1,21 +1,15 @@
-const isAdmin = async (req, res, next) => {
-    const { PrismaClient } = require('@prisma/client');
-    const prisma = new PrismaClient();
+const roleMiddleware = (requiredRole) => {
+    return (req, res, next) => {
+        if (!req.user) {
+            return res.status(401).json({ error: 'Não autorizado' });
+        }
 
-    try {
-        const user = await prisma.user.findUnique({
-            where: { id: req.userId },
-            select: { role: true }
-        });
-
-        if (!user || user.role !== 'ADMIN') {
-            return res.status(403).json({ error: 'Acesso negado: Requer privilégios de administrador' });
+        if (req.user.role !== requiredRole) {
+            return res.status(403).json({ error: 'Acesso negado: Permissão insuficiente' });
         }
 
         next();
-    } catch (error) {
-        res.status(500).json({ error: 'Erro ao verificar permissões' });
-    }
+    };
 };
 
-module.exports = { isAdmin };
+module.exports = roleMiddleware;
