@@ -21,8 +21,28 @@ model User {
 
   botConfig      BotConfig?
   whatsappInstance WhatsAppInstance?
+  autoTestConfig AutoTestConfig?
   chatSessions   ChatSession[]
   messageLogs    MessageLog[]
+}
+
+model AutoTestConfig {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  isEnabled      Boolean  @default(false)
+  panelType      String   @default("sigma") // sigma, pfast, koffice, warez
+  apiUrl         String   @default("")
+  
+  // Stores which fields are enabled to show: { username: true, password: true, dns: true, ... }
+  templateFields String   @default("{}") 
+  
+  // Statistics
+  generatedCount Int      @default(0)
+  failedCount    Int      @default(0)
+  
+  updatedAt      DateTime @updatedAt
 }
 
 model MessageLog {
