@@ -296,7 +296,7 @@ const AutoTest = () => {
                 </div>
             </div>
         </div>
-        </div >
+
     );
 };
 
