@@ -203,7 +203,7 @@ const QRCodeSection = ({ provider, onConnected, onError }) => {
                     <div>
                         <h3 className="text-xl font-bold mb-1">Escaneie o QR Code</h3>
                         <p className="text-primary-400 font-mono text-sm bg-primary-500/10 inline-block px-3 py-1 rounded-lg border border-primary-500/20">{instanceName}</p>
-                        <p className="text-slate-500 text-xs mt-4">Abra o WhatsApp > Aparelhos Conectados > Conectar</p>
+                        <p className="text-slate-500 text-xs mt-4">Abra o WhatsApp &gt; Aparelhos Conectados &gt; Conectar</p>
                     </div>
                 </div>
             )}
