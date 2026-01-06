@@ -21,12 +21,15 @@ const Instances = () => {
     }, [qr, instance]);
 
     const loadInstance = async () => {
-        if (!qr && !instance) setLoading(true); // Only show spinner on initial load
+        if (!qr && !instance) setLoading(true);
         try {
             const { data } = await api.get('/whatsapp');
-            setInstance(data);
-            if (data.status === 'connected') {
-                setQr(null);
+            // Backend returns {} if no instance, keep it as null in state
+            if (data && Object.keys(data).length > 0) {
+                setInstance(data);
+                if (data.status === 'connected') setQr(null);
+            } else {
+                setInstance(null);
             }
         } catch (e) {
             console.error(e);
