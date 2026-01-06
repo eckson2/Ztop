@@ -71,9 +71,24 @@ class WhatsAppService {
                 if (!success) throw new Error('Todas as tentativas de configurar webhook falharam');
             } else {
                 // Evolution
+                let finalWebhookUrl = webhookUrl;
+
+                // [EVOLUTION FIX] Support Internal Network (Docker Swarm / VPS Localhost)
+                // If BACKEND_INTERNAL_HOST is set (e.g., "dialogbot_backend:3000" or "127.0.0.1:3000"),
+                // rewrite the webhook URL to use http and that host.
+                if (process.env.BACKEND_INTERNAL_HOST) {
+                    try {
+                        const urlObj = new URL(webhookUrl);
+                        finalWebhookUrl = `http://${process.env.BACKEND_INTERNAL_HOST}${urlObj.pathname}${urlObj.search}`;
+                        console.log(`[DEBUG] Rewriting Evolution Webhook to Internal: ${finalWebhookUrl}`);
+                    } catch (e) {
+                        console.error('[DEBUG] Failed to rewrite internal URL:', e.message);
+                    }
+                }
+
                 await axios.post(`${baseUrl}/webhook/set/${instance.instanceId}`, {
                     enabled: enabled,
-                    url: webhookUrl,
+                    url: finalWebhookUrl,
                     webhookByEvents: true,
                     events: ['MESSAGES_UPSERT']
                 }, { headers });
@@ -241,7 +256,9 @@ class WhatsAppService {
             const axiosConfig = { timeout: 15000 }; // 15s timeout
 
             if (provider === 'evolution') {
-                const baseUrl = process.env.EVOLUTION_URL.replace(/\/$/, '');
+                // [EVOLUTION FIX] Verify if we should use a private internal URL (Docker Network)
+                const envUrl = process.env.EVOLUTION_PRIVATE_URL || process.env.EVOLUTION_URL;
+                const baseUrl = envUrl.replace(/\/$/, '');
                 const apiKey = process.env.EVOLUTION_API_KEY;
 
                 console.log(`Creating Evolution Instance: ${baseUrl}/instance/create`);
