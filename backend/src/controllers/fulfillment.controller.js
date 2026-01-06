@@ -20,35 +20,94 @@ const handleFulfillment = async (req, res) => {
             });
         }
 
-        if (!config.apiUrl) {
-            return res.json({
-                fulfillmentText: 'URL de API não configurada no painel.'
-            });
-        }
+
 
         const intentName = req.body.queryResult?.intent?.displayName;
         console.log(`[FULFILLMENT] Processing intent: ${intentName}`);
 
-        // 2. Call User's Configured API
-        console.log(`[FULFILLMENT] Calling API: ${config.apiUrl}`);
+
 
         let apiResponse;
-        try {
-            apiResponse = await axios.post(config.apiUrl, {}, {
-                headers: { 'Content-Type': 'application/json' }
-            });
-        } catch (apiError) {
-            console.error('[FULFILLMENT API ERROR]', apiError.message);
-            // Increment Failure Count
-            await prisma.autoTestConfig.update({
-                where: { userId },
-                data: { failedCount: { increment: 1 } }
-            });
-            throw new Error('Falha na comunicação com o servidor de teste.');
+        let data;
+
+        // 2. Determine API Call based on Panel Type
+        if (config.panelType === 'pfast') {
+            // PFAST INTEGRATION
+            console.log(`[FULFILLMENT] Using Pfast Integration`);
+
+            if (!config.pfastToken || !config.pfastSecret) {
+                return res.json({
+                    fulfillmentText: 'Token ou Secret do Pfast não configurados.'
+                });
+            }
+
+            // Generate Random Credentials
+            const randomSuffix = Math.floor(Math.random() * 90000) + 10000; // 5 digit random
+            const generatedUsername = `teste${randomSuffix}`;
+            const generatedPassword = `pass${randomSuffix}`;
+
+            const pfastUrl = `https://api.painelcliente.com/trial_create/${config.pfastToken}`;
+            const payload = {
+                secret: config.pfastSecret,
+                username: generatedUsername,
+                password: generatedPassword,
+                idbouquet: 1 // Default bouquet, maybe make configurable later if needed
+            };
+
+            try {
+                console.log(`[FULFILLMENT] Calling Pfast: ${pfastUrl}`);
+                apiResponse = await axios.post(pfastUrl, payload, {
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                // Standardize Pfast Response
+                // Pfast usually returns data directly or in key 'data'
+                // Assuming success structure matches generic need or mapping
+                const resData = apiResponse.data;
+                console.log('[FULFILLMENT] Pfast Response:', JSON.stringify(resData));
+
+                // Map Pfast specific response to our generic data structure
+                data = {
+                    username: generatedUsername,
+                    password: generatedPassword,
+                    dns: resData.dns || resData.url || 'http://dns.pfast.com', // Fallback if not provided
+                    package: 'Teste 2 horas', // Pfast trials are usually fixed duration
+                    expiresAtFormatted: '2 Horas',
+                    payUrl: 'Solicite ao atendente'
+                };
+
+                // Check for API error messages
+                if (resData.error || resData.status === false) {
+                    throw new Error(resData.message || 'Erro na API Pfast');
+                }
+
+            } catch (err) {
+                console.error('[FULFILLMENT PFAST ERROR]', err.message);
+                throw err; // Re-throw to hit the common catch block
+            }
+
+        } else {
+            // GENERIC POST INTEGRATION (Sigma, etc.)
+            console.log(`[FULFILLMENT] Calling Generic API: ${config.apiUrl}`);
+
+            if (!config.apiUrl) {
+                return res.json({
+                    fulfillmentText: 'URL de API não configurada no painel.'
+                });
+            }
+
+            try {
+                apiResponse = await axios.post(config.apiUrl, {}, {
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                data = apiResponse.data;
+            } catch (err) {
+                console.error('[FULFILLMENT GENERIC ERROR]', err.message);
+                throw err;
+            }
         }
 
-        const data = apiResponse.data;
-        console.log('[FULFILLMENT] API Response:', JSON.stringify(data));
+        console.log('[FULFILLMENT] Final Data:', JSON.stringify(data));
 
         // 3. Parse Template Fields
         const fields = JSON.parse(config.templateFields || '{}');
