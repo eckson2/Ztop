@@ -7,6 +7,19 @@ const Instances = () => {
     const [instance, setInstance] = useState(null);
     const [qr, setQr] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [provider, setProvider] = useState('evolution');
+
+    const handleCreateInstance = async () => {
+        setLoading(true);
+        try {
+            await api.post('/whatsapp', { provider });
+            await loadInstance();
+        } catch (e) {
+            console.error(e);
+            alert('Erro ao criar instância. Verifique o console.');
+        }
+        setLoading(false);
+    };
 
     useEffect(() => {
         loadInstance();
