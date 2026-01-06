@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const authMiddleware = (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
@@ -16,7 +16,22 @@ const authMiddleware = (req, res, next) => {
         }
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         req.userId = decoded.userId;
-        console.log(`[AUTH] Success for UserID: ${req.userId}`);
+
+        // Fetch user context for role checking
+        const { PrismaClient } = require('@prisma/client');
+        const prisma = new PrismaClient();
+
+        const user = await prisma.user.findUnique({
+            where: { id: decoded.userId }
+        });
+
+        if (!user) {
+            console.log(`[AUTH] User not found for ID: ${decoded.userId}`);
+            return res.status(401).json({ error: 'Usuário não encontrado' });
+        }
+
+        req.user = user;
+        console.log(`[AUTH] Success for User: ${user.email} (${user.role})`);
         next();
     } catch (err) {
         console.log(`[AUTH] Invalid Token: ${err.message}`);
