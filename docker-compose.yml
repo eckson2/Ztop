@@ -21,16 +21,19 @@ services:
     command: sh -c "npm install && npx prisma db push && npx prisma db seed && npm start"
     environment:
       - DATABASE_URL=postgresql://botsaas:botsaas@postgres:5432/botsaas
-      - JWT_SECRET=${JWT_SECRET}
+      - JWT_SECRET=${JWT_SECRET:-super_segredo_sistem_botsaas_2026}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
       - PORT=3000
-      - EVOLUTION_URL=${EVOLUTION_URL}
-      - EVOLUTION_API_KEY=${EVOLUTION_API_KEY}
-      - UAZ_URL=${UAZ_URL}
+      - EVOLUTION_URL=${EVOLUTION_URL:-http://evolution:8080}
+      - EVOLUTION_API_KEY=${EVOLUTION_API_KEY:-516a61a35cc472dfb5e186c11a95bae9}
+      - UAZ_URL=${UAZ_URL:-https://gestormais.uazapi.com}
       - UAZ_ADMIN_TOKEN=${UAZ_ADMIN_TOKEN}
       - FRONTEND_URL=https://front.ztop.dev.br
     networks:
       - topnet
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     deploy:
       labels:
         - "traefik.enable=true"
