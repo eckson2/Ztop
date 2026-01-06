@@ -28,8 +28,8 @@ class DialogflowService {
                 },
             };
 
-            const responses = await sessionClient.detectIntent(request);
-            const result = responses[0].queryResult;
+            const intentResponse = await sessionClient.detectIntent(request);
+            const result = intentResponse[0].queryResult;
 
             // Extract fulfillment messages (can be multiple)
             const responses = [];
