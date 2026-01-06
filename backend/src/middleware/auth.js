@@ -11,6 +11,9 @@ const authMiddleware = (req, res, next) => {
     const token = authHeader.split(' ')[1];
 
     try {
+        if (!process.env.JWT_SECRET) {
+            console.error('[CRITICAL] JWT_SECRET is missing in environment variables!');
+        }
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         req.userId = decoded.userId;
         console.log(`[AUTH] Success for UserID: ${req.userId}`);
