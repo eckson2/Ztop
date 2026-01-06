@@ -4,7 +4,9 @@ const roleMiddleware = (requiredRole) => {
             return res.status(401).json({ error: 'Não autorizado' });
         }
 
-        if (req.user.role !== requiredRole) {
+        // Case-insensitive check
+        if (req.user.role.toUpperCase() !== requiredRole.toUpperCase()) {
+            console.log(`[ROLE] Access Denied. User Role: ${req.user.role}, Required: ${requiredRole}`);
             return res.status(403).json({ error: 'Acesso negado: Permissão insuficiente' });
         }
 
