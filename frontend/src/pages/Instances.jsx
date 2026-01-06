@@ -43,15 +43,40 @@ const Instances = () => {
         }
     };
 
-    const [provider, setProvider] = useState('evolution'); // State for local selection
+    // Evolution Settings State
+    const [evoSettings, setEvoSettings] = useState({
+        rejectCall: true,
+        rejectMessage: 'Não atendemos ligações por aqui, por favor envie uma mensagem de texto.',
+        ignoreGroups: true,
+        alwaysOnline: false
+    });
 
-    const handleCreateInstance = async () => {
+    const [evoTypebot, setEvoTypebot] = useState({
+        enabled: false,
+        url: 'https://typebot.io',
+        flowName: ''
+    });
+
+    const saveEvoSettings = async () => {
         setLoading(true);
         try {
-            await api.post('/whatsapp', { provider });
-            await loadInstance(); // Reload to start QR process
+            await api.post('/whatsapp/settings', evoSettings);
+            alert('Configurações de comportamento salvas!');
         } catch (e) {
             console.error(e);
+            alert('Erro ao salvar configurações.');
+        }
+        setLoading(false);
+    };
+
+    const saveEvoTypebot = async () => {
+        setLoading(true);
+        try {
+            await api.post('/whatsapp/typebot', evoTypebot);
+            alert('Integração com Typebot salva!');
+        } catch (e) {
+            console.error(e);
+            alert('Erro ao salvar Typebot.');
         }
         setLoading(false);
     };
@@ -94,83 +119,202 @@ const Instances = () => {
                     </button>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* Status Card */}
-                    <div className="glass p-8 rounded-3xl flex flex-col justify-between">
-                        <div>
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="p-3 bg-slate-900 rounded-2xl">
-                                    <Smartphone size={24} className="text-primary-400" />
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-lg">{instance.instanceId}</h3>
-                                    <p className="text-xs text-slate-500 uppercase tracking-widest font-bold">{instance.provider}</p>
-                                </div>
-                            </div>
-
-                            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold ${instance.status === 'connected' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'
-                                }`}>
-                                {instance.status === 'connected' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-                                {instance.status === 'connected' ? 'Conectado' : 'Desconectado'}
-                            </div>
-                        </div>
-
-                        <div className="mt-10 pt-6 border-t border-white/5 space-y-4">
+                <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                        {/* Status Card */}
+                        <div className="glass p-8 rounded-3xl flex flex-col justify-between">
                             <div>
-                                <p className="text-xs text-slate-500 mb-2">Server URL</p>
-                                <code className="text-xs break-all text-slate-300 bg-black/30 p-2 rounded block">{instance.baseUrl}</code>
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="p-3 bg-slate-900 rounded-2xl">
+                                        <Smartphone size={24} className="text-primary-400" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-lg">{instance.instanceId}</h3>
+                                        <p className="text-xs text-slate-500 uppercase tracking-widest font-bold">{instance.provider}</p>
+                                    </div>
+                                </div>
+
+                                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold ${instance.status === 'connected' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'
+                                    }`}>
+                                    {instance.status === 'connected' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                                    {instance.status === 'connected' ? 'Conectado' : 'Desconectado'}
+                                </div>
                             </div>
 
-                            {/* Option to Reset/Delete Instance to switch provider */}
-                            <button
-                                onClick={async () => {
-                                    if (confirm('Isso irá desconectar o WhatsApp atual. Deseja continuar?')) {
-                                        setLoading(true);
-                                        try { await api.delete('/whatsapp'); setInstance(null); } catch (e) { }
-                                        setLoading(false);
-                                    }
-                                }}
-                                className="w-full py-2 border border-red-500/30 text-red-400 hover:bg-red-500/10 rounded-lg text-xs font-bold transition-all"
-                            >
-                                Desconectar / Trocar Provedor
-                            </button>
-                        </div>
-                    </div>
+                            <div className="mt-10 pt-6 border-t border-white/5 space-y-4">
+                                <div>
+                                    <p className="text-xs text-slate-500 mb-2">Server URL</p>
+                                    <code className="text-xs break-all text-slate-300 bg-black/30 p-2 rounded block">{instance.baseUrl}</code>
+                                </div>
 
-                    {/* QR Code Section */}
-                    <div className="glass p-8 rounded-3xl flex flex-col items-center justify-center min-h-[400px]">
-                        {instance.status === 'connected' ? (
-                            <div className="text-center space-y-4">
-                                <div className="w-20 h-20 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto">
-                                    <CheckCircle2 size={40} />
-                                </div>
-                                <h3 className="text-xl font-bold">Tudo Pronto!</h3>
-                                <p className="text-slate-400 text-sm max-w-[200px] mx-auto">Seu WhatsApp está emparelhado e pronto para responder.</p>
-                            </div>
-                        ) : qr ? (
-                            <div className="text-center space-y-6">
-                                <h3 className="text-xl font-bold">Escaneie o QR Code</h3>
-                                <div className="p-4 bg-white rounded-3xl shadow-2xl shadow-primary-500/20">
-                                    {qr.startsWith('http') || qr.length > 500 ? (
-                                        <img src={qr.startsWith('data:') ? qr : `data:image/png;base64,${qr}`} alt="QR" className="w-64 h-64 rounded-xl" />
-                                    ) : (
-                                        <QRCodeSVG value={qr} size={256} className="rounded-xl" />
-                                    )}
-                                </div>
-                                <p className="text-slate-400 text-xs">Abra o WhatsApp > Aparelhos Conectados</p>
-                            </div>
-                        ) : (
-                            <div className="text-center">
-                                <QrCode size={40} className="text-primary-500 mx-auto mb-4" />
-                                <h3 className="text-xl font-bold mb-2">Conectar Whatsapp</h3>
-                                <p className="text-slate-400 mb-6 max-w-xs mx-auto">Clique abaixo para gerar o QR Code e conectar seu aparelho.</p>
-                                <button onClick={fetchQr} className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-bold transition-all">
-                                    {loading ? 'Gerando...' : 'Gerar QR Code'}
+                                {/* Option to Reset/Delete Instance to switch provider */}
+                                <button
+                                    onClick={async () => {
+                                        if (confirm('Isso irá desconectar o WhatsApp atual. Deseja continuar?')) {
+                                            setLoading(true);
+                                            try { await api.delete('/whatsapp'); setInstance(null); } catch (e) { }
+                                            setLoading(false);
+                                        }
+                                    }}
+                                    className="w-full py-2 border border-red-500/30 text-red-400 hover:bg-red-500/10 rounded-lg text-xs font-bold transition-all"
+                                >
+                                    Desconectar / Trocar Provedor
                                 </button>
                             </div>
-                        )}
+                        </div>
+
+                        {/* QR Code Section */}
+                        <div className="glass p-8 rounded-3xl flex flex-col items-center justify-center min-h-[400px]">
+                            {instance.status === 'connected' ? (
+                                <div className="text-center space-y-4">
+                                    <div className="w-20 h-20 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto">
+                                        <CheckCircle2 size={40} />
+                                    </div>
+                                    <h3 className="text-xl font-bold">Tudo Pronto!</h3>
+                                    <p className="text-slate-400 text-sm max-w-[200px] mx-auto">Seu WhatsApp está emparelhado e pronto para responder.</p>
+                                </div>
+                            ) : qr ? (
+                                <div className="text-center space-y-6">
+                                    <h3 className="text-xl font-bold">Escaneie o QR Code</h3>
+                                    <div className="p-4 bg-white rounded-3xl shadow-2xl shadow-primary-500/20">
+                                        {qr.startsWith('http') || qr.length > 500 ? (
+                                            <img src={qr.startsWith('data:') ? qr : `data:image/png;base64,${qr}`} alt="QR" className="w-64 h-64 rounded-xl" />
+                                        ) : (
+                                            <QRCodeSVG value={qr} size={256} className="rounded-xl" />
+                                        )}
+                                    </div>
+                                    <p className="text-slate-400 text-xs">Abra o WhatsApp > Aparelhos Conectados</p>
+                                </div>
+                            ) : (
+                                <div className="text-center">
+                                    <QrCode size={40} className="text-primary-500 mx-auto mb-4" />
+                                    <h3 className="text-xl font-bold mb-2">Conectar Whatsapp</h3>
+                                    <p className="text-slate-400 mb-6 max-w-xs mx-auto">Clique abaixo para gerar o QR Code e conectar seu aparelho.</p>
+                                    <button onClick={fetchQr} className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-bold transition-all">
+                                        {loading ? 'Gerando...' : 'Gerar QR Code'}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
+
+                    {/* EVOLUTION SETTINGS (Only Visible When Connected) */}
+                    {instance.provider === 'evolution' && instance.status === 'connected' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
+                            {/* Behavior Settings */}
+                            <div className="glass p-8 rounded-3xl">
+                                <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                                    <Smartphone size={20} className="text-primary-500" />
+                                    Comportamento
+                                </h3>
+
+                                <div className="space-y-6">
+                                    <label className="flex items-center justify-between p-4 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
+                                        <span className="font-medium text-slate-300">Rejeitar Chamadas</span>
+                                        <input
+                                            type="checkbox"
+                                            className="w-5 h-5 accent-primary-500"
+                                            checked={evoSettings.rejectCall}
+                                            onChange={e => setEvoSettings({ ...evoSettings, rejectCall: e.target.checked })}
+                                        />
+                                    </label>
+
+                                    {evoSettings.rejectCall && (
+                                        <div className="space-y-2">
+                                            <label className="text-xs text-slate-500 uppercase font-bold ml-1">Mensagem de Rejeição</label>
+                                            <textarea
+                                                className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-sm focus:border-primary-500 outline-none transition-colors"
+                                                rows="3"
+                                                value={evoSettings.rejectMessage}
+                                                onChange={e => setEvoSettings({ ...evoSettings, rejectMessage: e.target.value })}
+                                            />
+                                        </div>
+                                    )}
+
+                                    <label className="flex items-center justify-between p-4 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
+                                        <span className="font-medium text-slate-300">Ignorar Grupos</span>
+                                        <input
+                                            type="checkbox"
+                                            className="w-5 h-5 accent-primary-500"
+                                            checked={evoSettings.ignoreGroups}
+                                            onChange={e => setEvoSettings({ ...evoSettings, ignoreGroups: e.target.checked })}
+                                        />
+                                    </label>
+
+                                    <label className="flex items-center justify-between p-4 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
+                                        <span className="font-medium text-slate-300">Sempre Online</span>
+                                        <input
+                                            type="checkbox"
+                                            className="w-5 h-5 accent-primary-500"
+                                            checked={evoSettings.alwaysOnline}
+                                            onChange={e => setEvoSettings({ ...evoSettings, alwaysOnline: e.target.checked })}
+                                        />
+                                    </label>
+
+                                    <button
+                                        onClick={saveEvoSettings}
+                                        className="w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl font-bold transition-all text-primary-400 border border-primary-500/20"
+                                    >
+                                        Salvar Comportamento
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Typebot Integration */}
+                            <div className="glass p-8 rounded-3xl">
+                                <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                                    <CheckCircle2 size={20} className="text-blue-500" />
+                                    Typebot Nativo
+                                </h3>
+
+                                <div className="space-y-6">
+                                    <label className="flex items-center justify-between p-4 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
+                                        <span className="font-medium text-slate-300">Habilitar Integração</span>
+                                        <input
+                                            type="checkbox"
+                                            className="w-5 h-5 accent-blue-500"
+                                            checked={evoTypebot.enabled}
+                                            onChange={e => setEvoTypebot({ ...evoTypebot, enabled: e.target.checked })}
+                                        />
+                                    </label>
+
+                                    {evoTypebot.enabled && (
+                                        <>
+                                            <div className="space-y-2">
+                                                <label className="text-xs text-slate-500 uppercase font-bold ml-1">URL do Typebot</label>
+                                                <input
+                                                    type="text"
+                                                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm focus:border-blue-500 outline-none transition-colors"
+                                                    placeholder="https://typebot.io"
+                                                    value={evoTypebot.url}
+                                                    onChange={e => setEvoTypebot({ ...evoTypebot, url: e.target.value })}
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <label className="text-xs text-slate-500 uppercase font-bold ml-1">Nome do Fluxo (Typebot Name)</label>
+                                                <input
+                                                    type="text"
+                                                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm focus:border-blue-500 outline-none transition-colors"
+                                                    placeholder="meu-bot-01"
+                                                    value={evoTypebot.flowName}
+                                                    onChange={e => setEvoTypebot({ ...evoTypebot, flowName: e.target.value })}
+                                                />
+                                            </div>
+                                        </>
+                                    )}
+
+                                    <button
+                                        onClick={saveEvoTypebot}
+                                        className="w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl font-bold transition-all text-blue-400 border border-blue-500/20 mt-auto"
+                                    >
+                                        Salvar Integração
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );
