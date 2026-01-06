@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
-import { LayoutDashboard, Settings, Shield, LogOut, Zap, Smartphone } from 'lucide-react';
+import { LayoutDashboard, Settings, Shield, LogOut, Zap, Smartphone, FileText } from 'lucide-react';
 
 import { Login, Register } from './pages/Auth';
 import SetupWizard from './pages/SetupWizard';
 import Instances from './pages/Instances';
 import AdminUsers from './pages/AdminUsers';
+import AutoTest from './pages/AutoTest';
 import PrivateRoute from './components/PrivateRoute';
 import { useAuth } from './contexts/AuthContext';
 import api from './api';
@@ -94,6 +95,9 @@ const Layout = ({ children }) => {
           <SidebarItem icon={<Settings size={20} />} label="Configurar BOT" to="/setup" />
           <SidebarItem icon={<Smartphone size={20} />} label="WhatsApp" to="/instances" />
 
+          {/* [NEW] AutoTest Sidebar Item */}
+          <SidebarItem icon={<FileText size={20} />} label="Teste Automático" to="/autotest" />
+
           <div className="pt-6 mt-6 border-t border-white/10 space-y-2">
             {user?.role === 'ADMIN' && (
               <SidebarItem icon={<Shield size={20} />} label="Admin" to="/admin" />
@@ -127,6 +131,7 @@ const App = () => {
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/setup" element={<SetupWizard />} />
                 <Route path="/instances" element={<Instances />} />
+                <Route path="/autotest" element={<AutoTest />} /> {/* [NEW] Route */}
                 <Route path="/admin" element={<AdminUsers />} />
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>
