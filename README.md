@@ -1,6 +1,6 @@
 # 🤖 SaaS DialogFlow Automation Platform
 
-Uma plataforma empresarial completa para gerenciamento de chatbots, automação de testes e integração multicanal via WhatsApp e Dialogflow, desenvolvida por **[TOTVS Online](https://totvs.online)**. Projetada para escalar, suportando multi-inquilinos (SaaS) com painel administrativo robusto.
+Uma plataforma empresarial completa para gerenciamento de chatbots, automação de testes e integração multicanal via WhatsApp e Dialogflow, desenvolvida por **[TopTVS Online](https://toptvs.online)**. Projetada para escalar, suportando multi-inquilinos (SaaS) com painel administrativo robusto.
 
 ---
 
