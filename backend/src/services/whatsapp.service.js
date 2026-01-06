@@ -349,6 +349,7 @@ class WhatsAppService {
                     console.log(`[DEBUG] UazAPI Strategy 1: POST /instance/init`);
                     const response = await axios.post(`${baseUrl}/instance/init`, {
                         instanceName: instanceName,
+                        name: instanceName, // [FIX] Some versions require 'name'
                         token: instanceName,
                         qrcode: true
                     }, {
@@ -374,7 +375,8 @@ class WhatsAppService {
                 try {
                     console.log(`[DEBUG] UazAPI Strategy 2: POST /instance/create`);
                     const response = await axios.post(`${baseUrl}/instance/create`, {
-                        instanceName: instanceName
+                        instanceName: instanceName,
+                        name: instanceName // [FIX] Some versions require 'name'
                     }, {
                         headers: { 'admintoken': adminToken },
                         ...axiosConfig
