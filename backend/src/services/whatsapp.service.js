@@ -181,28 +181,51 @@ class WhatsAppService {
                 // Evolution: DELETE /instance/delete/{name}
                 await axios.delete(`${baseUrl}/instance/delete/${instance.instanceId}`, { headers });
             } else if (instance.provider === 'uazapi') {
-                // UazAPI: DELETE /instance/{name} or DELETE /instance (with body)
-                // Based on user docs: DELETE /instance OR DELETE /instance/delete/{key}
+                // UazAPI Deletion Strategies (Brute Force Compatibility)
 
-                // Try 1: DELETE /instance/{instanceId} (RESTful Standard)
+                // Strategy 1: DELETE /instance/{instanceId} (RESTful Standard)
                 try {
+                    console.log(`[DEBUG] Trying Strategy 1: DELETE /instance/${instance.instanceId}`);
                     await axios.delete(`${baseUrl}/instance/${instance.instanceId}`, { headers });
+                    console.log('[DEBUG] Strategy 1 Success');
                     return;
-                } catch (e) { }
+                } catch (e) { console.log(`[DEBUG] Strategy 1 Failed: ${e.response?.status}`); }
 
-                // Try 2: DELETE /instance with body (User snippet implied this)
+                // Strategy 2: DELETE /instance?instanceName={instanceId} (Query Param)
                 try {
+                    console.log(`[DEBUG] Trying Strategy 2: DELETE /instance?instanceName=${instance.instanceId}`);
                     await axios.delete(`${baseUrl}/instance`, {
                         headers,
-                        data: { instanceName: instance.instanceId }
+                        params: {
+                            instanceName: instance.instanceId,
+                            key: instance.instanceId // Try 'key' too
+                        }
                     });
+                    console.log('[DEBUG] Strategy 2 Success');
                     return;
-                } catch (e) { }
+                } catch (e) { console.log(`[DEBUG] Strategy 2 Failed: ${e.response?.status}`); }
 
-                // Try 3: Legacy DELETE /instance/delete/{instanceId}
+                // Strategy 3: DELETE /instance with Body (Likely candidate based on docs)
                 try {
+                    console.log(`[DEBUG] Trying Strategy 3: DELETE /instance (Body)`);
+                    await axios.delete(`${baseUrl}/instance`, {
+                        headers,
+                        data: {
+                            instanceName: instance.instanceId,
+                            name: instance.instanceId, // Some versions check 'name'
+                            key: instance.instanceId   // Some check 'key'
+                        }
+                    });
+                    console.log('[DEBUG] Strategy 3 Success');
+                    return;
+                } catch (e) { console.log(`[DEBUG] Strategy 3 Failed: ${e.response?.status}`); }
+
+                // Strategy 4: Legacy DELETE /instance/delete/{instanceId}
+                try {
+                    console.log(`[DEBUG] Trying Strategy 4: DELETE /instance/delete/${instance.instanceId}`);
                     await axios.delete(`${baseUrl}/instance/delete/${instance.instanceId}`, { headers });
-                } catch (e) { }
+                    console.log('[DEBUG] Strategy 4 Success');
+                } catch (e) { console.log(`[DEBUG] Strategy 4 Failed: ${e.response?.status}`); }
             }
         } catch (error) {
             console.error(`Simple Delete Error: ${error.message}`);
