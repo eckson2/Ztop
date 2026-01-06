@@ -142,41 +142,31 @@ class WhatsAppService {
                     fileName: fileName
                 }, { headers });
             } else if (instance.provider === 'uazapi') {
-                // Determine extension safely
-                let ext = 'jpg';
-                if (type === 'audio') ext = 'mp3';
-                if (type === 'video') ext = 'mp4';
-                if (type === 'document') ext = 'pdf';
-
-                // Try to get real extension from URL if possible
-                if (url.includes('.')) {
-                    const urlExt = url.split('.').pop().split('?')[0];
-                    if (urlExt && urlExt.length < 5) ext = urlExt;
-                }
-
-                console.log(`[DEBUG] UazAPI Media: Type=${type}, Ext=${ext}, URL=${url}`);
+                // UazAPI v2: /send/media (Strict Documentation Compliance)
+                console.log(`[DEBUG] UazAPI Media: Type=${type} URL=${url}`);
 
                 const payload = {
                     number: number,
-                    url: url,
                     type: type,
-                    mediatype: type, // [FIX] Send both for compatibility
-                    caption: caption,
-                    extension: ext
+                    file: url
                 };
 
+                // Add specific fields based on documentation
+                if (type === 'document') {
+                    const fileName = url.split('/').pop().split('?')[0] || 'document.pdf';
+                    payload.docName = fileName;
+                    // Documentation says 'text' acts as caption for documents
+                    if (caption) payload.text = caption;
+                } else {
+                    // For image/video/audio, documentation implies standard behavior (or no caption)
+                    if (caption) payload.caption = caption;
+                }
+
                 try {
+                    console.log(`[DEBUG] UazAPI Sending Payload:`, JSON.stringify(payload));
                     await axios.post(`${baseUrl}/send/media`, payload, { headers });
                 } catch (e) {
-                    console.log(`[DEBUG] /send/media failed (v2). Trying v1 legacy format...`);
-                    // Fallback to V1 (some versions use nested 'media' object or different endpoint)
-                    await axios.post(`${baseUrl}/message/sendMedia/${instance.instanceId}`, {
-                        number: number,
-                        url: url,
-                        type: type,
-                        caption: caption,
-                        filename: `file.${ext}`
-                    }, { headers });
+                    console.error(`[DEBUG] UazAPI /send/media Failed:`, JSON.stringify(e.response?.data || e.message));
                 }
             }
         } catch (error) {
