@@ -142,15 +142,42 @@ class WhatsAppService {
                     fileName: fileName
                 }, { headers });
             } else if (instance.provider === 'uazapi') {
-                // UazAPI v2: /send/media
+                // Determine extension safely
+                let ext = 'jpg';
+                if (type === 'audio') ext = 'mp3';
+                if (type === 'video') ext = 'mp4';
+                if (type === 'document') ext = 'pdf';
+
+                // Try to get real extension from URL if possible
+                if (url.includes('.')) {
+                    const urlExt = url.split('.').pop().split('?')[0];
+                    if (urlExt && urlExt.length < 5) ext = urlExt;
+                }
+
+                console.log(`[DEBUG] UazAPI Media: Type=${type}, Ext=${ext}, URL=${url}`);
+
                 const payload = {
                     number: number,
                     url: url,
-                    type: type, // image, video, audio, document
+                    type: type,
+                    mediatype: type, // [FIX] Send both for compatibility
                     caption: caption,
-                    extension: type === 'audio' ? 'mp3' : 'jpg' // Basic fallback guess
+                    extension: ext
                 };
-                await axios.post(`${baseUrl}/send/media`, payload, { headers });
+
+                try {
+                    await axios.post(`${baseUrl}/send/media`, payload, { headers });
+                } catch (e) {
+                    console.log(`[DEBUG] /send/media failed (v2). Trying v1 legacy format...`);
+                    // Fallback to V1 (some versions use nested 'media' object or different endpoint)
+                    await axios.post(`${baseUrl}/message/sendMedia/${instance.instanceId}`, {
+                        number: number,
+                        url: url,
+                        type: type,
+                        caption: caption,
+                        filename: `file.${ext}`
+                    }, { headers });
+                }
             }
         } catch (error) {
             console.error(`WhatsApp Media Error (${instance.provider}):`, JSON.stringify(error.response?.data || error.message, null, 2));
