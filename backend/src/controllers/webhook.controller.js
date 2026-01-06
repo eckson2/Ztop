@@ -47,10 +47,10 @@ const handleWebhook = async (req, res) => {
         let remoteJid, text, isMe, isGroup;
 
         if (user.whatsappInstance.provider === 'evolution') {
-            console.log(`[DEBUG] Evolution Event: ${body.event}`);
-
             // support various event casings
             const allowedEvents = ['MESSAGES_UPSERT', 'messages.upsert', 'messages_upsert'];
+
+            // Only log if it's NOT a message event (to reduce noise) but keep errors visible
             if (!allowedEvents.includes(body.event)) return res.sendStatus(200);
 
             const message = body.data;
