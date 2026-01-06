@@ -214,6 +214,14 @@ class WhatsAppService {
             } else if (instance.provider === 'uazapi') {
                 // UazAPI Deletion Strategies (Brute Force Compatibility)
 
+                // [FIX] Force Logout first to kill session on provider side
+                try {
+                    console.log(`[DEBUG] UazAPI: Forcing Logout before delete for ${instance.instanceId}`);
+                    await axios.delete(`${baseUrl}/instance/logout/${instance.instanceId}`, { headers });
+                } catch (e) {
+                    console.log(`[DEBUG] Logout failed (might be already logged out): ${e.response?.status}`);
+                }
+
                 // Strategy 1: DELETE /instance/{instanceId} (RESTful Standard)
                 try {
                     console.log(`[DEBUG] Trying Strategy 1: DELETE /instance/${instance.instanceId}`);
@@ -225,11 +233,12 @@ class WhatsAppService {
                 // Strategy 2: DELETE /instance?instanceName={instanceId} (Query Param)
                 try {
                     console.log(`[DEBUG] Trying Strategy 2: DELETE /instance?instanceName=${instance.instanceId}`);
+                    // Some Go versions require 'key' instead of instanceName in query
                     await axios.delete(`${baseUrl}/instance`, {
                         headers,
                         params: {
                             instanceName: instance.instanceId,
-                            key: instance.instanceId // Try 'key' too
+                            key: instance.instanceId
                         }
                     });
                     console.log('[DEBUG] Strategy 2 Success');
