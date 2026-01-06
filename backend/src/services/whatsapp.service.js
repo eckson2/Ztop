@@ -132,14 +132,14 @@ class WhatsAppService {
                 // [FIX] Evolution often requires fileName
                 const fileName = url.split('/').pop().split('?')[0] || `file.${type === 'audio' ? 'mp3' : 'jpg'}`;
 
+                // [FIX] Flatten payload for Evolution v2 (mediatype at root)
                 await axios.post(`${baseUrl}/message/sendMedia/${instance.instanceId}`, {
                     number: number,
-                    mediaMessage: {
-                        mediatype: mediaType,
-                        media: url,
-                        caption: caption,
-                        fileName: fileName
-                    }
+                    mediatype: mediaType,
+                    mimetype: mediaType === 'image' ? 'image/jpeg' : (mediaType === 'audio' ? 'audio/mpeg' : (mediaType === 'video' ? 'video/mp4' : 'application/pdf')),
+                    media: url,
+                    caption: caption,
+                    fileName: fileName
                 }, { headers });
             } else if (instance.provider === 'uazapi') {
                 // UazAPI v2: /send/media
