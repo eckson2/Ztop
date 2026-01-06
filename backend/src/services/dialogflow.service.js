@@ -58,7 +58,10 @@ class DialogflowService {
                             const wa = payload.whatsapp.structValue ? payload.whatsapp.structValue.fields : payload.whatsapp;
 
                             // Handling Protobuf Struct to JS Object extraction (simplified)
-                            const extractValue = (field) => field.stringValue || field;
+                            const extractValue = (field) => {
+                                if (!field) return null;
+                                return field.stringValue || field;
+                            };
 
                             const type = extractValue(wa.type || wa.fields?.type);
                             const url = extractValue(wa.url || wa.fields?.url);
