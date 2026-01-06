@@ -81,6 +81,9 @@ const Instances = () => {
         setLoading(false);
     };
 
+    const isConnected = instance?.status === 'connected';
+    const isEvolution = instance?.provider && instance.provider.toLowerCase() === 'evolution';
+
     return (
         <div className="max-w-5xl mx-auto p-8">
             <div className="flex justify-between items-end mb-10">
@@ -134,10 +137,10 @@ const Instances = () => {
                                     </div>
                                 </div>
 
-                                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold ${instance.status === 'connected' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'
+                                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold ${isConnected ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'
                                     }`}>
-                                    {instance.status === 'connected' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-                                    {instance.status === 'connected' ? 'Conectado' : 'Desconectado'}
+                                    {isConnected ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                                    {isConnected ? 'Conectado' : 'Desconectado'}
                                 </div>
                             </div>
 
@@ -165,7 +168,7 @@ const Instances = () => {
 
                         {/* QR Code Section */}
                         <div className="glass p-8 rounded-3xl flex flex-col items-center justify-center min-h-[400px]">
-                            {instance.status === 'connected' ? (
+                            {isConnected ? (
                                 <div className="text-center space-y-4">
                                     <div className="w-20 h-20 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto">
                                         <CheckCircle2 size={40} />
@@ -199,7 +202,7 @@ const Instances = () => {
                     </div>
 
                     {/* EVOLUTION SETTINGS (Only Visible When Connected) */}
-                    {(instance.provider?.toLowerCase() === 'evolution') && instance.status === 'connected' && (
+                    {isEvolution && isConnected && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
                             {/* Behavior Settings */}
                             <div className="glass p-8 rounded-3xl">
