@@ -167,6 +167,50 @@ class WhatsAppService {
     }
 
     /**
+     * Delete instance from provider
+     */
+    static async deleteInstance(instance) {
+        try {
+            const token = decrypt(instance.token);
+            const baseUrl = instance.baseUrl.replace(/\/$/, '');
+            const headers = { 'apikey': token, 'token': token, 'admintoken': process.env.UAZ_ADMIN_TOKEN || token };
+
+            console.log(`[DEBUG] Deleting Instance ${instance.instanceId} from ${instance.provider}`);
+
+            if (instance.provider === 'evolution') {
+                // Evolution: DELETE /instance/delete/{name}
+                await axios.delete(`${baseUrl}/instance/delete/${instance.instanceId}`, { headers });
+            } else if (instance.provider === 'uazapi') {
+                // UazAPI: DELETE /instance/{name} or DELETE /instance (with body)
+                // Based on user docs: DELETE /instance OR DELETE /instance/delete/{key}
+
+                // Try 1: DELETE /instance/{instanceId} (RESTful Standard)
+                try {
+                    await axios.delete(`${baseUrl}/instance/${instance.instanceId}`, { headers });
+                    return;
+                } catch (e) { }
+
+                // Try 2: DELETE /instance with body (User snippet implied this)
+                try {
+                    await axios.delete(`${baseUrl}/instance`, {
+                        headers,
+                        data: { instanceName: instance.instanceId }
+                    });
+                    return;
+                } catch (e) { }
+
+                // Try 3: Legacy DELETE /instance/delete/{instanceId}
+                try {
+                    await axios.delete(`${baseUrl}/instance/delete/${instance.instanceId}`, { headers });
+                } catch (e) { }
+            }
+        } catch (error) {
+            console.error(`Simple Delete Error: ${error.message}`);
+            // Non-blocking, just log
+        }
+    }
+
+    /**
      * Logic for automatic instance provisioning (Fase 4)
      */
     static async provisionInstance(provider, instanceName) {
