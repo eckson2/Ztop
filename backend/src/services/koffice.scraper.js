@@ -7,15 +7,18 @@ const runNinjaScraper = async (dashboardUrl, username, password) => {
 
         browser = await puppeteer.launch({
             executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser',
-            headless: 'new',
+            headless: true, // 'new' can be buggy on some Alpine builds
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
                 '--disable-gpu',
-                '--disable-dev-shm-usage', // Prevent OOM in Docker
+                '--disable-dev-shm-usage',
                 '--no-first-run',
                 '--no-zygote',
-                '--single-process', // Better for low resources
+                // '--single-process', // REMOVED: Causes crashes on modern Chromium/Alpine
+                '--disable-extensions',
+                '--disable-software-rasterizer',
+                '--mute-audio'
             ],
             ignoreHTTPSErrors: true
         });
