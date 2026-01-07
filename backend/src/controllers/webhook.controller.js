@@ -138,14 +138,20 @@ const handleWebhook = async (req, res) => {
         if (!chatSession.isBotActive) {
             console.log(`[HANDOFF] Bot paused for ${remoteJid}. Message ignored by bot engine.`);
             return res.sendStatus(200);
+        } else {
+            console.log(`[DEBUG] Bot ACTIVE for ${remoteJid}. Proceeding to engine.`);
         }
 
         let responses = [];
         try {
             if (user.botConfig.botType === 'dialogflow') {
+                console.log(`[DEBUG] Calling Dialogflow Service for ${remoteJid}...`);
                 responses = await DialogflowService.getResponse(user.botConfig, remoteJid, text);
+                console.log(`[DEBUG] Dialogflow Responses:`, JSON.stringify(responses));
             } else if (user.botConfig.botType === 'typebot') {
                 responses = await TypebotService.getResponse(user.botConfig, user.id, remoteJid, text);
+            } else {
+                console.log(`[DEBUG] Unknown Bot Type: ${user.botConfig.botType}`);
             }
         } catch (botError) {
             console.error('[BOT ERROR]', botError.message);
