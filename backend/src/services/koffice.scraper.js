@@ -37,16 +37,34 @@ const runNinjaScraper = async (dashboardUrl, username, password) => {
         });
 
         console.log(`[KOFFICE NINJA] Navigating to Login: ${dashboardUrl}`);
-        await page.goto(dashboardUrl, { waitUntil: 'networkidle2', timeout: 60000 });
+        await page.goto(dashboardUrl, { waitUntil: 'networkidle2', timeout: 90000 }); // Increased to 90s
+
+        const pageTitle = await page.title();
+        console.log(`[KOFFICE NINJA] Page Loaded. Title: "${pageTitle}"`);
+
+        // Check for Cloudflare
+        if (pageTitle.includes('Just a moment') || pageTitle.includes('Cloudflare')) {
+            console.log('[KOFFICE NINJA] Cloudflare detected. Waiting extra time...');
+            await new Promise(r => setTimeout(r, 10000));
+        }
 
         // Check if already logged in (unlikely in fresh instance, but good practice)
         // Or if we need to log in
-        const loginSelector = 'input[name="login"], input[type="text"]'; // Heuristic
-        const passSelector = 'input[name="senha"], input[type="password"]'; // Heuristic
+        const loginSelector = 'input[name="login"], input[name="username"], input[type="text"]';
+        const passSelector = 'input[name="senha"], input[name="password"], input[type="password"]';
         const btnSelector = 'button[type="submit"], input[type="submit"], button.btn-primary';
 
         // Wait for inputs
-        await page.waitForSelector(passSelector, { timeout: 15000 });
+        console.log('[KOFFICE NINJA] Waiting for Login Inputs...');
+        try {
+            await page.waitForSelector(passSelector, { timeout: 30000 }); // Increased to 30s
+        } catch (e) {
+            // Debug: Screenshot or detailed logs could go here
+            console.log('[KOFFICE NINJA] Timeout waiting for inputs. Dumping HTML snippet...');
+            const htmlSnippet = await page.content();
+            console.log(htmlSnippet.substring(0, 500)); // Log first 500 chars to see if blocked
+            throw e;
+        }
 
         console.log('[KOFFICE NINJA] Typing Credentials...');
         await page.type(loginSelector, username);
