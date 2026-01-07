@@ -121,8 +121,9 @@ const handleFulfillment = async (req, res) => {
                 console.log(`[FULFILLMENT] KOFFICE SCRAPER MODE ACTIVATED`);
 
                 try {
-                    // 1. Generate Fake Email for Form
-                    const fakeEmail = `teste_${senderPhone}@gmail.com`;
+                    // 1. Generate Fake Email for Form (Randomized)
+                    const randomId = Math.floor(Math.random() * 100000);
+                    const fakeEmail = `teste_${senderPhone}_${randomId}@gmail.com`;
 
                     // 2. Prepare Form Data
                     const params = new URLSearchParams();
@@ -138,7 +139,8 @@ const handleFulfillment = async (req, res) => {
                             'Content-Type': 'application/x-www-form-urlencoded',
                             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
                         },
-                        httpsAgent
+                        httpsAgent,
+                        timeout: 60000 // 60s timeout
                     });
 
                     const html = apiResponse.data;
