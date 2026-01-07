@@ -1,4 +1,5 @@
 const axios = require('axios');
+const https = require('https');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
@@ -107,12 +108,18 @@ const handleFulfillment = async (req, res) => {
             };
 
             try {
+                // Ignore SSL errors for panels with self-signed certs
+                const httpsAgent = new https.Agent({ rejectUnauthorized: false });
+
                 apiResponse = await axios.post(config.apiUrl, genericPayload, {
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 'Content-Type': 'application/json' },
+                    httpsAgent
                 });
                 data = apiResponse.data;
+                console.log('[FULFILLMENT] Generic/Koffice Response:', JSON.stringify(data));
+
             } catch (err) {
-                console.error('[FULFILLMENT GENERIC ERROR]', err.message);
+                console.error('[FULFILLMENT GENERIC ERROR]', err.response?.data || err.message);
                 throw err;
             }
         }
