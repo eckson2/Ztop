@@ -10,6 +10,8 @@ const handleWebhook = async (req, res) => {
         const { userId } = req.params;
         let { token } = req.query;
 
+        console.log(`[DEBUG_V3] >>> START WEBHOOK PROCESSING for ${userId} <<<`); // [TRACE] Proof of Code Update
+
         // [EVOLUTION FIX] Strip event name if appended to token (e.g., token=XYZ/messages-upsert)
         if (token && token.includes('/')) {
             token = token.split('/')[0];
@@ -18,7 +20,7 @@ const handleWebhook = async (req, res) => {
         const body = req.body;
 
         // 1. Identify User and Configs
-        console.log(`[DEBUG] Incoming Webhook for User ${userId}`);
+        console.log(`[DEBUG] Identifying User...`);
 
         const user = await prisma.user.findUnique({
             where: { id: userId },
@@ -38,20 +40,31 @@ const handleWebhook = async (req, res) => {
         }
 
         if (!user.botConfig || !user.whatsappInstance) {
+            console.log(`[DEBUG] Missing botConfig or whatsappInstance for user ${userId}`);
             return res.sendStatus(200);
         }
 
-        if (user.status !== 'active') return res.sendStatus(200);
+        if (user.status !== 'active') {
+            console.log(`[DEBUG] User ${userId} is not active`);
+            return res.sendStatus(200);
+        }
 
         // 2. Normalize Payload
         let remoteJid, text, isMe, isGroup;
+
+        console.log(`[DEBUG] Provider: ${user.whatsappInstance.provider}`);
 
         if (user.whatsappInstance.provider === 'evolution') {
             // support various event casings
             const allowedEvents = ['MESSAGES_UPSERT', 'messages.upsert', 'messages_upsert'];
 
             // Only log if it's NOT a message event (to reduce noise) but keep errors visible
-            if (!allowedEvents.includes(body.event)) return res.sendStatus(200);
+            if (!allowedEvents.includes(body.event)) {
+                // console.log(`[DEBUG] Ignored event: ${body.event}`);
+                return res.sendStatus(200);
+            }
+
+            console.log(`[DEBUG] Processing Evolution Event: ${body.event}`);
 
             const message = body.data;
 
