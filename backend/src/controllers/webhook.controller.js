@@ -110,6 +110,36 @@ const handleWebhook = async (req, res) => {
         await MetricsService.logMessage(user.id, 'in');
 
         // 4. Process with Active Engine
+
+        // [HANDOFF] Check/Create Chat Session
+        let chatSession = await prisma.chatSession.findUnique({
+            where: {
+                userId_remoteJid: { userId: user.id, remoteJid: remoteJid }
+            }
+        });
+
+        if (!chatSession) {
+            chatSession = await prisma.chatSession.create({
+                data: {
+                    userId: user.id,
+                    remoteJid: remoteJid,
+                    isBotActive: true
+                }
+            });
+        }
+
+        // Update last interaction
+        await prisma.chatSession.update({
+            where: { id: chatSession.id },
+            data: { lastInteraction: new Date() }
+        });
+
+        // [HANDOFF] If Bot is Paused (Human mode), stop here.
+        if (!chatSession.isBotActive) {
+            console.log(`[HANDOFF] Bot paused for ${remoteJid}. Message ignored by bot engine.`);
+            return res.sendStatus(200);
+        }
+
         let responses = [];
         try {
             if (user.botConfig.botType === 'dialogflow') {

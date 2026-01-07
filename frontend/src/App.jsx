@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
-import { LayoutDashboard, Settings, Shield, LogOut, Zap, Smartphone, FileText } from 'lucide-react';
+import { LayoutDashboard, Settings, Shield, LogOut, Zap, Smartphone, FileText, MessageSquare } from 'lucide-react';
 
 import { Login, Register } from './pages/Auth';
 import SetupWizard from './pages/SetupWizard';
@@ -10,6 +10,7 @@ import AutoTest from './pages/AutoTest';
 import PrivateRoute from './components/PrivateRoute';
 import { useAuth } from './contexts/AuthContext';
 import api from './api';
+import LiveChat from './pages/LiveChat'; // [NEW] Import
 
 const Dashboard = () => {
   const [metrics, setMetrics] = useState({ total: 0, in: 0, out: 0 });
@@ -92,6 +93,7 @@ const Layout = ({ children }) => {
 
         <nav className="space-y-2">
           <SidebarItem icon={<LayoutDashboard size={20} />} label="Dashboard" to="/" />
+          <SidebarItem icon={<MessageSquare size={20} />} label="Atendimento" to="/chat" />
           <SidebarItem icon={<Settings size={20} />} label="Configurar BOT" to="/setup" />
           <SidebarItem icon={<Smartphone size={20} />} label="WhatsApp" to="/instances" />
 
@@ -129,6 +131,7 @@ const App = () => {
             <Layout>
               <Routes>
                 <Route path="/" element={<Dashboard />} />
+                <Route path="/chat" element={<LiveChat />} />
                 <Route path="/setup" element={<SetupWizard />} />
                 <Route path="/instances" element={<Instances />} />
                 <Route path="/autotest" element={<AutoTest />} /> {/* [NEW] Route */}

@@ -48,6 +48,8 @@ app.use('/api/whatsapp', waRoutes);
 app.use('/api/webhook', webhookRoutes);
 app.use('/api/fulfillment', fulfillmentRoutes);
 app.use('/api/autotest', autotestRoutes); // [NEW] Endpoint
+const chatRoutes = require('./src/routes/chat.routes');
+app.use('/api/chat', chatRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/metrics', metricsRoutes);
 

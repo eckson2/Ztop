@@ -102,6 +102,8 @@ model ChatSession {
   
   remoteJid      String
   botSessionId   String?  // Para Typebot ou Dialogflow
+  isBotActive    Boolean  @default(true) // [NEW] Handoff control
+  lastStatusChange DateTime?
   lastInteraction DateTime @default(now())
 
   @@unique([userId, remoteJid])
