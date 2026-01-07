@@ -112,6 +112,7 @@ const handleFulfillment = async (req, res) => {
             const genericPayload = {
                 msg: realMessage,        // Use actual user input (e.g. "teste")
                 message: realMessage,    // Alternative
+                text: realMessage,       // Some apps use 'text'
                 sender: senderPhone,     // Numeric phone
                 from: senderPhone,       // Alternative
                 name: senderName,
@@ -121,6 +122,8 @@ const handleFulfillment = async (req, res) => {
             try {
                 // Ignore SSL errors for panels with self-signed certs
                 const httpsAgent = new https.Agent({ rejectUnauthorized: false });
+
+                console.log(`[FULFILLMENT] Sending Generic/Koffice Payload:`, JSON.stringify(genericPayload));
 
                 apiResponse = await axios.post(config.apiUrl, genericPayload, {
                     headers: { 'Content-Type': 'application/json' },
