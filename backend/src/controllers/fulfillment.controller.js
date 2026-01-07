@@ -97,15 +97,25 @@ const handleFulfillment = async (req, res) => {
                 });
             }
 
+            // Extract real data from Dialogflow body
+            const originalPayload = req.body.originalDetectIntentRequest?.payload;
+            const realMessage = req.body.queryResult?.queryText || 'teste';
+
+            // Try to find the phone number in standard Evolution/WPPConnect payloads
+            // Evolution usually sends: data.sender (e.g. 55119999@s.whatsapp.net)
+            const remoteJid = originalPayload?.data?.sender || originalPayload?.data?.key?.remoteJid || userId;
+            const senderPhone = remoteJid.replace(/\D/g, ''); // Extract just numbers
+            const senderName = originalPayload?.data?.pushName || 'Cliente';
+
             // Construct AutoReply-compatible payload
             // Many panels (like Koffice/OpenGL) expect 'msg'/'message' and 'sender'
             const genericPayload = {
-                msg: 'teste',        // Most common trigger
-                message: 'teste',    // Alternative
-                sender: userId,      // Phone number
-                from: userId,        // Alternative
-                name: 'Cliente',     // Placeholder name
-                package: 'com.whatsapp' // Simulando App real
+                msg: realMessage,        // Use actual user input (e.g. "teste")
+                message: realMessage,    // Alternative
+                sender: senderPhone,     // Numeric phone
+                from: senderPhone,       // Alternative
+                name: senderName,
+                package: 'com.whatsapp'  // Simulando App real
             };
 
             try {
