@@ -87,6 +87,7 @@ const handleFulfillment = async (req, res) => {
                 throw err; // Re-throw to hit the common catch block
             }
 
+        } else {
             // GENERIC POST INTEGRATION (Sigma, Koffice, AutoReply style)
             console.log(`[FULFILLMENT] Calling Generic/Koffice API: ${config.apiUrl}`);
 
