@@ -128,7 +128,7 @@ const handleFulfillment = async (req, res) => {
                     // 2. Prepare Form Data
                     const params = new URLSearchParams();
                     params.append('email', fakeEmail);
-                    params.append('automatic_test_plan', '14'); // Plan 14: 3h (Attempting to fix timeout on Plan 13)
+                    params.append('automatic_test_plan', '8'); // Plan 8: 2h (Final attempt)
 
                     const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 
@@ -140,7 +140,7 @@ const handleFulfillment = async (req, res) => {
                             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
                         },
                         httpsAgent,
-                        timeout: 60000 // 60s timeout
+                        timeout: 120000 // 120s Timeout
                     });
 
                     const html = apiResponse.data;
