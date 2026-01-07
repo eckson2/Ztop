@@ -118,7 +118,8 @@ const handleFulfillment = async (req, res) => {
 
             // --- KOFFICE WEB SCRAPER MODE ---
             // Detect if the user is using the "AutoTest" Web URL (HTML Form) instead of API
-            if (config.apiUrl.includes('/autotest/')) {
+            // OR if the user explicitly selected 'koffice' panel type (Ninja Mode)
+            if (config.panelType === 'koffice' || (config.apiUrl && config.apiUrl.includes('/autotest/'))) {
                 console.log(`[FULFILLMENT] KOFFICE SCRAPER MODE ACTIVATED`);
 
                 try {
