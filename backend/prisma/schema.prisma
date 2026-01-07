@@ -40,7 +40,6 @@ model AutoTestConfig {
   
   // Pfast Config
   pfastToken     String   @default("")
-  pfastToken     String   @default("")
   pfastSecret    String   @default("")
 
   // Customization Fields
