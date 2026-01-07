@@ -1,5 +1,6 @@
 const axios = require('axios');
 const https = require('https');
+const cheerio = require('cheerio');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
@@ -88,13 +89,11 @@ const handleFulfillment = async (req, res) => {
             }
 
         } else {
-            // GENERIC POST INTEGRATION (Sigma, Koffice, AutoReply style)
-            console.log(`[FULFILLMENT] Calling Generic/Koffice API: ${config.apiUrl}`);
+            // GENERIC POST INTEGRATION
+            console.log(`[FULFILLMENT] Generic Integration Check: ${config.apiUrl}`);
 
             if (!config.apiUrl) {
-                return res.json({
-                    fulfillmentText: 'URL de API não configurada no painel.'
-                });
+                return res.json({ fulfillmentText: 'URL de API não configurada no painel.' });
             }
 
             // Extract real data from Dialogflow body
@@ -102,10 +101,7 @@ const handleFulfillment = async (req, res) => {
             const realMessage = req.body.queryResult?.queryText || 'teste';
 
             // Try to find the phone number
-            // 1. From Evolution Payload
             let remoteJid = originalPayload?.data?.sender || originalPayload?.data?.key?.remoteJid;
-
-            // 2. If not found, try to extract from Session ID (e.g. .../sessions/551199999@s.whatsapp.net)
             if (!remoteJid && req.body.session) {
                 const sessionParts = req.body.session.split('/');
                 const lastPart = sessionParts[sessionParts.length - 1];
@@ -113,44 +109,97 @@ const handleFulfillment = async (req, res) => {
                     remoteJid = lastPart;
                 }
             }
-
-            // 3. Fallback to userId (UUID)
             if (!remoteJid) remoteJid = userId;
 
-            const senderPhone = remoteJid.replace(/\D/g, ''); // Extract just numbers (551199999)
+            const senderPhone = remoteJid.replace(/\D/g, '');
             const senderName = originalPayload?.data?.pushName || 'Cliente';
 
-            // Construct AutoReply-compatible payload
-            // Many panels (like Koffice/OpenGL) expect 'msg'/'message' and 'sender'
-            // [UPDATE] Using URLSearchParams for x-www-form-urlencoded compatibility (PHP backends)
-            const params = new URLSearchParams();
-            params.append('msg', realMessage);
-            params.append('message', realMessage);  // Alternative
-            params.append('text', realMessage);     // Alternative
-            params.append('sender', senderPhone);
-            params.append('from', senderPhone);     // Alternative
-            params.append('number', senderPhone);   // Alternative
-            params.append('name', senderName);
-            params.append('package', 'com.whatsapp');
+            // --- KOFFICE WEB SCRAPER MODE ---
+            // Detect if the user is using the "AutoTest" Web URL (HTML Form) instead of API
+            if (config.apiUrl.includes('/autotest/')) {
+                console.log(`[FULFILLMENT] KOFFICE SCRAPER MODE ACTIVATED`);
 
-            try {
-                // Ignore SSL errors for panels with self-signed certs
-                const httpsAgent = new https.Agent({ rejectUnauthorized: false });
+                try {
+                    // 1. Generate Fake Email for Form
+                    const fakeEmail = `teste_${senderPhone}@gmail.com`;
 
-                // Convert to string for logging
-                const payloadStr = params.toString();
-                console.log(`[FULFILLMENT] Sending Generic/Koffice Payload (Form-UrlEncoded):`, payloadStr);
+                    // 2. Prepare Form Data
+                    const params = new URLSearchParams();
+                    params.append('email', fakeEmail);
+                    params.append('automatic_test_plan', '13'); // Plan 13: Full + Adults (4h) - deduced from common usage
 
-                apiResponse = await axios.post(config.apiUrl, payloadStr, {
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    httpsAgent
-                });
-                data = apiResponse.data;
-                console.log('[FULFILLMENT] Generic/Koffice Response:', JSON.stringify(data));
+                    const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 
-            } catch (err) {
-                console.error('[FULFILLMENT GENERIC ERROR]', err.response?.data || err.message);
-                throw err;
+                    console.log(`[FULFILLMENT SCRAPER] Posting to Form: ${config.apiUrl} | Email: ${fakeEmail}`);
+
+                    apiResponse = await axios.post(config.apiUrl, params.toString(), {
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                        },
+                        httpsAgent
+                    });
+
+                    const html = apiResponse.data;
+                    console.log('[FULFILLMENT SCRAPER] HTML Received. Length:', html.length);
+                    // console.log(html); // Debug only if needed
+
+                    // 3. Parse HTML
+                    const $ = cheerio.load(html);
+                    const bodyText = $('body').text(); // Extract all text to find patterns
+
+                    // Extract Credentials using Regex
+                    // Patterns often look like: "Usuário: XXXXX", "Senha: YYYYY"
+                    const userMatch = bodyText.match(/Usuário:\s*([^\s\n]+)/i);
+                    const passMatch = bodyText.match(/Senha:\s*([^\s\n]+)/i);
+                    const expireMatch = bodyText.match(/Vencimento:\s*([^\n]+)/i);
+                    const urlMatch = bodyText.match(/URL SMARTERS:\s*([^\s\n]+)/i) || bodyText.match(/http[s]?:\/\/[^\s\n]+/);
+
+                    if (userMatch && passMatch) {
+                        data = {
+                            username: userMatch[1].trim(),
+                            password: passMatch[1].trim(),
+                            expiresAtFormatted: expireMatch ? expireMatch[1].trim() : '4 Horas',
+                            package: 'Teste Automático (Scraped)',
+                            dns: urlMatch ? urlMatch[1].trim() : 'Verif. no App',
+                            payUrl: 'Solicite ao atendente'
+                        };
+                        console.log('[FULFILLMENT SCRAPER] Success:', JSON.stringify(data));
+                    } else {
+                        throw new Error('Não foi possível ler os dados do teste no HTML gerado. Painel pode ter recusado.');
+                    }
+
+                } catch (err) {
+                    console.error('[FULFILLMENT SCRAPER ERROR]', err.message);
+                    throw err;
+                }
+
+            } else {
+                // --- LEGACY/API MODE (AutoReply style) ---
+                console.log(`[FULFILLMENT] KOFFICE API MODE (AutoReply)`);
+                const params = new URLSearchParams();
+                params.append('msg', realMessage);
+                params.append('message', realMessage);
+                params.append('text', realMessage);
+                params.append('sender', senderPhone);
+                params.append('from', senderPhone);
+                params.append('number', senderPhone);
+                params.append('name', senderName);
+                params.append('package', 'com.whatsapp');
+
+                try {
+                    const httpsAgent = new https.Agent({ rejectUnauthorized: false });
+                    console.log(`[FULFILLMENT] Sending API Payload:`, params.toString());
+                    apiResponse = await axios.post(config.apiUrl, params.toString(), {
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        httpsAgent
+                    });
+                    data = apiResponse.data;
+                    console.log('[FULFILLMENT] API Response:', JSON.stringify(data));
+                } catch (err) {
+                    console.error('[FULFILLMENT API ERROR]', err.message);
+                    throw err;
+                }
             }
         }
 
