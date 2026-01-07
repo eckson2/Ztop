@@ -101,10 +101,23 @@ const handleFulfillment = async (req, res) => {
             const originalPayload = req.body.originalDetectIntentRequest?.payload;
             const realMessage = req.body.queryResult?.queryText || 'teste';
 
-            // Try to find the phone number in standard Evolution/WPPConnect payloads
-            // Evolution usually sends: data.sender (e.g. 55119999@s.whatsapp.net)
-            const remoteJid = originalPayload?.data?.sender || originalPayload?.data?.key?.remoteJid || userId;
-            const senderPhone = remoteJid.replace(/\D/g, ''); // Extract just numbers
+            // Try to find the phone number
+            // 1. From Evolution Payload
+            let remoteJid = originalPayload?.data?.sender || originalPayload?.data?.key?.remoteJid;
+
+            // 2. If not found, try to extract from Session ID (e.g. .../sessions/551199999@s.whatsapp.net)
+            if (!remoteJid && req.body.session) {
+                const sessionParts = req.body.session.split('/');
+                const lastPart = sessionParts[sessionParts.length - 1];
+                if (lastPart.includes('@s.whatsapp.net') || lastPart.match(/^\d+$/)) {
+                    remoteJid = lastPart;
+                }
+            }
+
+            // 3. Fallback to userId (UUID)
+            if (!remoteJid) remoteJid = userId;
+
+            const senderPhone = remoteJid.replace(/\D/g, ''); // Extract just numbers (551199999)
             const senderName = originalPayload?.data?.pushName || 'Cliente';
 
             // Construct AutoReply-compatible payload
