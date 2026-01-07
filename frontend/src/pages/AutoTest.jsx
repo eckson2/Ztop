@@ -52,10 +52,14 @@ const AutoTest = () => {
                     try { fields = JSON.parse(fields); } catch (e) { fields = {}; }
                 }
 
-                setConfig({
+                setConfig(prev => ({
+                    ...prev,
                     ...data,
-                    templateFields: fields
-                });
+                    templateFields: {
+                        ...prev.templateFields,
+                        ...fields
+                    }
+                }));
             }
         } catch (error) {
             console.error('Erro ao carregar configuração:', error);
