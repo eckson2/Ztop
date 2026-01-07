@@ -43,7 +43,7 @@ const handleFulfillment = async (req, res) => {
 
             // Generate Random Credentials
             const randomSuffix = Math.floor(Math.random() * 90000) + 10000; // 5 digit random
-            const generatedUsername = `teste${randomSuffix}`;
+            const generatedUsername = `user${randomSuffix}`;
             const generatedPassword = `pass${randomSuffix}`;
 
             const pfastUrl = `https://api.painelcliente.com/trial_create/${config.pfastToken}`;
