@@ -71,8 +71,8 @@ const handleFulfillment = async (req, res) => {
                     username: generatedUsername,
                     password: generatedPassword,
                     dns: resData.dns || resData.url || 'http://dns.pfast.com', // Fallback if not provided
-                    package: 'Teste 2 horas', // Pfast trials are usually fixed duration
-                    expiresAtFormatted: '2 Horas',
+                    package: 'Teste 4 horas', // [FIX] Force 4 hours display
+                    expiresAtFormatted: '4 Horas', // [FIX] Force 4 hours display
                     payUrl: 'Solicite ao atendente'
                 };
 
@@ -118,12 +118,34 @@ const handleFulfillment = async (req, res) => {
         // Show Name (Customizable)
         responseLines.push(`Nome: ${config.nameField || 'Tops'}`);
 
+        // [NEW] App Name Configurable
+        if (fields.appName && config.appName) {
+            responseLines.push(`📱 Aplicativo: ${config.appName}`);
+        }
+
         if (fields.username) responseLines.push(`✅ Usuário: ${data.username || data.usuario || 'N/A'}`);
         if (fields.password) responseLines.push(`✅ Senha: ${data.password || data.senha || 'N/A'}`);
         if (fields.dns) responseLines.push(`🌐 DNS: ${data.dns || 'N/A'}`);
         if (fields.plano) responseLines.push(`📦 Plano: ${data.package || data.Plano || data.plano || 'N/A'}`);
         if (fields.vencimento) responseLines.push(`🗓️ Vencimento: ${data.expiresAtFormatted || data.Vencimento || data.vencimento || 'N/A'}`);
-        if (fields.pagamento) responseLines.push(`💳 Assinar/Renovar Plano: ${data.payUrl || data['Pagamento Automatico'] || data.pagamento_automatico || 'N/A'}`);
+
+        // [NEW] Custom M3U Link with Placeholder Replacement
+        if (fields.m3uLink && config.m3uLink) {
+            let m3u = config.m3uLink;
+            m3u = m3u.replace(/{username}/g, data.username || '')
+                .replace(/{password}/g, data.password || '')
+                .replace(/{user}/g, data.username || '') // Alias for user satisfaction
+                .replace(/{pass}/g, data.password || '');
+
+            responseLines.push(`🟢 Link M3U: ${m3u}`);
+        }
+
+        // [NEW] Custom Payment or Default
+        if (fields.customPaymentUrl && config.customPaymentUrl) {
+            responseLines.push(`💳 Link de Pagamento: ${config.customPaymentUrl}`);
+        } else if (fields.pagamento) {
+            responseLines.push(`💳 Assinar/Renovar Plano: ${data.payUrl || data['Pagamento Automatico'] || data.pagamento_automatico || 'N/A'}`);
+        }
 
         const responseText = responseLines.join('\n');
 

@@ -16,13 +16,19 @@ const AutoTest = () => {
         pfastToken: '',
         pfastSecret: '',
         nameField: 'Tops',
+        m3uLink: '',
+        appName: '',
+        customPaymentUrl: '',
         templateFields: {
             username: true,
             password: true,
             dns: true,
             plano: true,
             vencimento: true,
-            pagamento: true
+            pagamento: true,
+            m3uLink: false,
+            appName: false,
+            customPaymentUrl: false
         },
         generatedCount: 0,
         failedCount: 0
@@ -228,6 +234,43 @@ const AutoTest = () => {
                                         placeholder="Ex: Tops IPTV"
                                         className="bg-transparent border-none text-white focus:ring-0 p-0 placeholder:text-slate-600"
                                     />
+                                </div>
+
+                                {/* Personalização Extra */}
+                                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-white/5 pt-4">
+                                    <h3 className="md:col-span-2 text-sm font-bold text-slate-300">Configurações Avançadas</h3>
+
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-slate-400 font-medium ml-1">Nome do Aplicativo</label>
+                                        <input
+                                            type="text"
+                                            value={config.appName || ''}
+                                            onChange={(e) => setConfig({ ...config, appName: e.target.value })}
+                                            placeholder="Ex: Minha TV App"
+                                            className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-primary-500"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-slate-400 font-medium ml-1">Link de Pagamento Manual</label>
+                                        <input
+                                            type="text"
+                                            value={config.customPaymentUrl || ''}
+                                            onChange={(e) => setConfig({ ...config, customPaymentUrl: e.target.value })}
+                                            placeholder="Ex: https://meulink.com"
+                                            className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-primary-500"
+                                        />
+                                    </div>
+                                    <div className="md:col-span-2 space-y-1">
+                                        <label className="text-xs text-slate-400 font-medium ml-1">Template Link M3U</label>
+                                        <input
+                                            type="text"
+                                            value={config.m3uLink || ''}
+                                            onChange={(e) => setConfig({ ...config, m3uLink: e.target.value })}
+                                            placeholder="http://url.com/get.php?username={user}&password={pass}..."
+                                            className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-primary-500 font-mono"
+                                        />
+                                        <p className="text-[10px] text-slate-500 ml-1">Variáveis: <code>{'{user}'}</code>, <code>{'{pass}'}</code></p>
+                                    </div>
                                 </div>
                                 {Object.keys(config.templateFields).map((field) => (
                                     <label key={field} className="flex items-center gap-3 p-3 rounded-xl bg-black/20 border border-white/5 cursor-pointer hover:bg-white/5 transition-colors">

@@ -40,7 +40,13 @@ model AutoTestConfig {
   
   // Pfast Config
   pfastToken     String   @default("")
+  pfastToken     String   @default("")
   pfastSecret    String   @default("")
+
+  // Customization Fields
+  m3uLink        String   @default("") // Template for M3U link
+  appName        String   @default("") // Custom App Name
+  customPaymentUrl String @default("") // Custom Payment Link
   
   // Stores which fields are enabled to show: { username: true, password: true, dns: true, ... }
   templateFields String   @default("{}") 
