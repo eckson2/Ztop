@@ -128,7 +128,7 @@ const handleFulfillment = async (req, res) => {
                     // 2. Prepare Form Data
                     const params = new URLSearchParams();
                     params.append('email', fakeEmail);
-                    params.append('automatic_test_plan', '13'); // Plan 13: Full + Adults (4h) - deduced from common usage
+                    params.append('automatic_test_plan', '14'); // Plan 14: 3h (Attempting to fix timeout on Plan 13)
 
                     const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 
