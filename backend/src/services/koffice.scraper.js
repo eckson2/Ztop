@@ -25,6 +25,16 @@ const runNinjaScraper = async (dashboardUrl, username, password) => {
 
         const page = await browser.newPage();
 
+        // 1. Set Real User Agent (Critical for Cloudflare)
+        await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+
+        // 2. Hide "navigator.webdriver" (Critical for Cloudflare)
+        await page.evaluateOnNewDocument(() => {
+            Object.defineProperty(navigator, 'webdriver', {
+                get: () => false,
+            });
+        });
+
         // Optimize Page Load
         await page.setRequestInterception(true);
         page.on('request', (req) => {
@@ -37,15 +47,21 @@ const runNinjaScraper = async (dashboardUrl, username, password) => {
         });
 
         console.log(`[KOFFICE NINJA] Navigating to Login: ${dashboardUrl}`);
-        await page.goto(dashboardUrl, { waitUntil: 'networkidle2', timeout: 90000 }); // Increased to 90s
+        await page.goto(dashboardUrl, { waitUntil: 'networkidle2', timeout: 90000 });
 
-        const pageTitle = await page.title();
-        console.log(`[KOFFICE NINJA] Page Loaded. Title: "${pageTitle}"`);
+        // 3. Smart Cloudflare Wait (Poll for Title Change)
+        let retries = 0;
+        while (retries < 12) { // Wait up to 60s
+            const title = await page.title();
+            console.log(`[KOFFICE NINJA] Check ${retries + 1}/12 - Title: "${title}"`);
 
-        // Check for Cloudflare
-        if (pageTitle.includes('Just a moment') || pageTitle.includes('Cloudflare')) {
-            console.log('[KOFFICE NINJA] Cloudflare detected. Waiting extra time...');
-            await new Promise(r => setTimeout(r, 10000));
+            if (!title.includes('Just a moment') && !title.includes('Cloudflare')) {
+                break; // Passed!
+            }
+
+            console.log('[KOFFICE NINJA] Still on Cloudflare... Waiting 5s...');
+            await new Promise(r => setTimeout(r, 5000));
+            retries++;
         }
 
         // Check if already logged in (unlikely in fresh instance, but good practice)
