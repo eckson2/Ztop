@@ -131,11 +131,14 @@ const handleFulfillment = async (req, res) => {
 
         // [NEW] Custom M3U Link with Placeholder Replacement
         if (fields.m3uLink && config.m3uLink) {
+            const userVal = data.username || data.usuario || data.user || '';
+            const passVal = data.password || data.senha || data.pass || '';
+
             let m3u = config.m3uLink;
-            m3u = m3u.replace(/{username}/g, data.username || '')
-                .replace(/{password}/g, data.password || '')
-                .replace(/{user}/g, data.username || '') // Alias for user satisfaction
-                .replace(/{pass}/g, data.password || '');
+            m3u = m3u.replace(/{username}/g, userVal)
+                .replace(/{password}/g, passVal)
+                .replace(/{user}/g, userVal)
+                .replace(/{pass}/g, passVal);
 
             responseLines.push(`🟢 Link M3U: ${m3u}`);
         }
