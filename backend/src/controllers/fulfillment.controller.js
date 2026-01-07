@@ -3,6 +3,7 @@ const axios = require('axios');
 const https = require('https');
 const cheerio = require('cheerio');
 const { PrismaClient } = require('@prisma/client');
+const { runNinjaScraper } = require('../services/koffice.scraper');
 const prisma = new PrismaClient();
 
 const handleFulfillment = async (req, res) => {
@@ -121,38 +122,28 @@ const handleFulfillment = async (req, res) => {
                 console.log(`[FULFILLMENT] KOFFICE SCRAPER MODE ACTIVATED`);
 
                 try {
-                    // 1. Generate Fake Email for Form (Randomized)
-                    const randomId = Math.floor(Math.random() * 100000);
-                    const fakeEmail = `teste_${senderPhone}_${randomId}@gmail.com`;
+                    // Use new "Ninja" Scraper with Puppeteer
+                    console.log(`[FULFILLMENT] Starting Koffice Ninja Scraper...`);
 
-                    // 2. Prepare Form Data
-                    const params = new URLSearchParams();
-                    params.append('email', fakeEmail);
-                    params.append('automatic_test_plan', '8'); // Plan 8: 2h (Final attempt)
+                    // Defaults (will be configurable later via AutoTestConfig)
+                    const dashboardUrl = config.dashboardUrl || 'https://a.opengl.in/login/';
+                    const dashUser = config.dashboardUser || 'brtvtop';
+                    const dashPass = config.dashboardPass || '56xtv23';
 
-                    const httpsAgent = new https.Agent({ rejectUnauthorized: false });
+                    const scrapeResult = await runNinjaScraper(dashboardUrl, dashUser, dashPass);
 
-                    console.log(`[FULFILLMENT SCRAPER] Posting to Form: ${config.apiUrl} | Email: ${fakeEmail}`);
+                    if (!scrapeResult.success) {
+                        throw new Error(scrapeResult.error || 'Erro desconhecido no Scraper Ninja');
+                    }
 
-                    apiResponse = await axios.post(config.apiUrl, params.toString(), {
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-                        },
-                        httpsAgent,
-                        timeout: 120000 // 120s Timeout
-                    });
+                    const html = scrapeResult.html;
+                    console.log('[FULFILLMENT SCRAPER] HTML Received from Puppeteer. Parsing...');
 
-                    const html = apiResponse.data;
-                    console.log('[FULFILLMENT SCRAPER] HTML Received. Length:', html.length);
-                    // console.log(html); // Debug only if needed
-
-                    // 3. Parse HTML
+                    // 3. Parse HTML (Same Logic)
                     const $ = cheerio.load(html);
-                    const bodyText = $('body').text(); // Extract all text to find patterns
+                    const bodyText = $('body').text();
 
                     // Extract Credentials using Regex
-                    // Patterns often look like: "Usuário: XXXXX", "Senha: YYYYY"
                     const userMatch = bodyText.match(/Usuário:\s*([^\s\n]+)/i);
                     const passMatch = bodyText.match(/Senha:\s*([^\s\n]+)/i);
                     const expireMatch = bodyText.match(/Vencimento:\s*([^\n]+)/i);
@@ -162,14 +153,14 @@ const handleFulfillment = async (req, res) => {
                         data = {
                             username: userMatch[1].trim(),
                             password: passMatch[1].trim(),
-                            expiresAtFormatted: expireMatch ? expireMatch[1].trim() : '4 Horas',
-                            package: 'Teste Automático (Scraped)',
+                            expiresAtFormatted: expireMatch ? expireMatch[1].trim() : 'TESTE GERADO',
+                            package: 'Teste Automático (Ninja)',
                             dns: urlMatch ? urlMatch[1].trim() : 'Verif. no App',
                             payUrl: 'Solicite ao atendente'
                         };
                         console.log('[FULFILLMENT SCRAPER] Success:', JSON.stringify(data));
                     } else {
-                        throw new Error('Não foi possível ler os dados do teste no HTML gerado. Painel pode ter recusado.');
+                        throw new Error('Não foi possível ler os dados do modal. HTML pode ter mudado.');
                     }
 
                 } catch (err) {

@@ -46,6 +46,11 @@ model AutoTestConfig {
   m3uLink        String   @default("") // Template for M3U link
   appName        String   @default("") // Custom App Name
   customPaymentUrl String @default("") // Custom Payment Link
+
+  // Koffice Ninja Spec
+  dashboardUrl   String   @default("")
+  dashboardUser  String   @default("")
+  dashboardPass  String   @default("")
   
   // Stores which fields are enabled to show: { username: true, password: true, dns: true, ... }
   templateFields String   @default("{}") 

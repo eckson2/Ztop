@@ -39,7 +39,7 @@ const getConfig = async (req, res) => {
 const updateConfig = async (req, res) => {
     try {
         const userId = req.userId;
-        let { isEnabled, panelType, apiUrl, nameField, templateFields, pfastToken, pfastSecret, m3uLink, appName, customPaymentUrl } = req.body;
+        let { isEnabled, panelType, apiUrl, nameField, templateFields, pfastToken, pfastSecret, m3uLink, appName, customPaymentUrl, dashboardUrl, dashboardUser, dashboardPass } = req.body;
 
         const config = await prisma.autoTestConfig.upsert({
             where: { userId },
@@ -53,6 +53,9 @@ const updateConfig = async (req, res) => {
                 m3uLink: m3uLink || '',
                 appName: appName || '',
                 customPaymentUrl: customPaymentUrl || '',
+                dashboardUrl: dashboardUrl || '',
+                dashboardUser: dashboardUser || '',
+                dashboardPass: dashboardPass || '',
                 templateFields: typeof templateFields === 'string' ? templateFields : JSON.stringify(templateFields)
             },
             create: {
@@ -66,6 +69,9 @@ const updateConfig = async (req, res) => {
                 m3uLink: m3uLink || '',
                 appName: appName || '',
                 customPaymentUrl: customPaymentUrl || '',
+                dashboardUrl: dashboardUrl || '',
+                dashboardUser: dashboardUser || '',
+                dashboardPass: dashboardPass || '',
                 templateFields: typeof templateFields === 'string' ? templateFields : JSON.stringify(templateFields)
             }
         });
