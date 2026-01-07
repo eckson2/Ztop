@@ -122,24 +122,27 @@ const handleFulfillment = async (req, res) => {
 
             // Construct AutoReply-compatible payload
             // Many panels (like Koffice/OpenGL) expect 'msg'/'message' and 'sender'
-            const genericPayload = {
-                msg: realMessage,        // Use actual user input (e.g. "teste")
-                message: realMessage,    // Alternative
-                text: realMessage,       // Some apps use 'text'
-                sender: senderPhone,     // Numeric phone
-                from: senderPhone,       // Alternative
-                name: senderName,
-                package: 'com.whatsapp'  // Simulando App real
-            };
+            // [UPDATE] Using URLSearchParams for x-www-form-urlencoded compatibility (PHP backends)
+            const params = new URLSearchParams();
+            params.append('msg', realMessage);
+            params.append('message', realMessage);  // Alternative
+            params.append('text', realMessage);     // Alternative
+            params.append('sender', senderPhone);
+            params.append('from', senderPhone);     // Alternative
+            params.append('number', senderPhone);   // Alternative
+            params.append('name', senderName);
+            params.append('package', 'com.whatsapp');
 
             try {
                 // Ignore SSL errors for panels with self-signed certs
                 const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 
-                console.log(`[FULFILLMENT] Sending Generic/Koffice Payload:`, JSON.stringify(genericPayload));
+                // Convert to string for logging
+                const payloadStr = params.toString();
+                console.log(`[FULFILLMENT] Sending Generic/Koffice Payload (Form-UrlEncoded):`, payloadStr);
 
-                apiResponse = await axios.post(config.apiUrl, genericPayload, {
-                    headers: { 'Content-Type': 'application/json' },
+                apiResponse = await axios.post(config.apiUrl, payloadStr, {
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     httpsAgent
                 });
                 data = apiResponse.data;
