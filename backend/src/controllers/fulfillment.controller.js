@@ -86,9 +86,8 @@ const handleFulfillment = async (req, res) => {
                 throw err; // Re-throw to hit the common catch block
             }
 
-        } else {
-            // GENERIC POST INTEGRATION (Sigma, etc.)
-            console.log(`[FULFILLMENT] Calling Generic API: ${config.apiUrl}`);
+            // GENERIC POST INTEGRATION (Sigma, Koffice, AutoReply style)
+            console.log(`[FULFILLMENT] Calling Generic/Koffice API: ${config.apiUrl}`);
 
             if (!config.apiUrl) {
                 return res.json({
@@ -96,8 +95,19 @@ const handleFulfillment = async (req, res) => {
                 });
             }
 
+            // Construct AutoReply-compatible payload
+            // Many panels (like Koffice/OpenGL) expect 'msg'/'message' and 'sender'
+            const genericPayload = {
+                msg: 'teste',        // Most common trigger
+                message: 'teste',    // Alternative
+                sender: userId,      // Phone number
+                from: userId,        // Alternative
+                name: 'Cliente',     // Placeholder name
+                package: 'com.whatsapp' // Simulando App real
+            };
+
             try {
-                apiResponse = await axios.post(config.apiUrl, {}, {
+                apiResponse = await axios.post(config.apiUrl, genericPayload, {
                     headers: { 'Content-Type': 'application/json' }
                 });
                 data = apiResponse.data;
