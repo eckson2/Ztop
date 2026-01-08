@@ -20,12 +20,14 @@ const runNinjaScraper = async (dashboardUrl, username, password) => {
                 '--no-zygote',
                 '--disable-extensions',
                 '--disable-software-rasterizer',
-                '--mute-audio'
+                '--mute-audio',
+                '--window-size=1920,1080'
             ],
             ignoreHTTPSErrors: true
         });
 
         const page = await browser.newPage();
+        await page.setViewport({ width: 1920, height: 1080 });
 
         // Optimized Stealth: No need for manual UserAgent or WebDriver hiding, Plugin does it.
 
@@ -43,17 +45,36 @@ const runNinjaScraper = async (dashboardUrl, username, password) => {
         console.log(`[KOFFICE NINJA] Navigating to Login: ${dashboardUrl}`);
         await page.goto(dashboardUrl, { waitUntil: 'networkidle2', timeout: 90000 });
 
-        // 3. Smart Cloudflare Wait (Poll for Title Change)
+        // 3. Smart Cloudflare Wait (Poll for Title Change + Active Solving)
         let retries = 0;
-        while (retries < 12) { // Wait up to 60s
+        while (retries < 20) { // Wait up to 100s
             const title = await page.title();
-            console.log(`[KOFFICE NINJA] Check ${retries + 1}/12 - Title: "${title}"`);
+            console.log(`[KOFFICE NINJA] Check ${retries + 1}/20 - Title: "${title}"`);
 
             if (!title.includes('Just a moment') && !title.includes('Cloudflare')) {
                 break; // Passed!
             }
 
-            console.log('[KOFFICE NINJA] Still on Cloudflare... Waiting 5s...');
+            console.log('[KOFFICE NINJA] Cloudflare detected. Attempting to solve...');
+
+            // 3.1 Mouse Wiggle to prove humanity
+            try {
+                // Random mouse movement is key
+                await page.mouse.move(100 + Math.random() * 200, 100 + Math.random() * 200);
+                await page.mouse.move(300 + Math.random() * 200, 300 + Math.random() * 200);
+            } catch (e) { /* ignore */ }
+
+            // 3.2 Try to click Challenge Checkbox
+            const challengeSelector = '#challenge-stage, iframe[src*="cloudflare"]';
+            try {
+                const challengeFrame = await page.$(challengeSelector);
+                if (challengeFrame) {
+                    console.log('[KOFFICE NINJA] Found potential challenge element. Hovering/Clicking...');
+                    await challengeFrame.hover();
+                    await challengeFrame.click();
+                }
+            } catch (e) { /* ignore */ }
+
             await new Promise(r => setTimeout(r, 5000));
             retries++;
         }
