@@ -1,9 +1,12 @@
-const puppeteer = require('puppeteer-core');
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+
+puppeteer.use(StealthPlugin());
 
 const runNinjaScraper = async (dashboardUrl, username, password) => {
     let browser = null;
     try {
-        console.log('[KOFFICE NINJA] Launching Headless Browser...');
+        console.log('[KOFFICE NINJA] Launching Headless Browser (Stealth Mode)...');
 
         browser = await puppeteer.launch({
             executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser',
@@ -15,7 +18,6 @@ const runNinjaScraper = async (dashboardUrl, username, password) => {
                 '--disable-dev-shm-usage',
                 '--no-first-run',
                 '--no-zygote',
-                // '--single-process', // REMOVED: Causes crashes on modern Chromium/Alpine
                 '--disable-extensions',
                 '--disable-software-rasterizer',
                 '--mute-audio'
@@ -25,15 +27,7 @@ const runNinjaScraper = async (dashboardUrl, username, password) => {
 
         const page = await browser.newPage();
 
-        // 1. Set Real User Agent (Critical for Cloudflare)
-        await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-
-        // 2. Hide "navigator.webdriver" (Critical for Cloudflare)
-        await page.evaluateOnNewDocument(() => {
-            Object.defineProperty(navigator, 'webdriver', {
-                get: () => false,
-            });
-        });
+        // Optimized Stealth: No need for manual UserAgent or WebDriver hiding, Plugin does it.
 
         // Optimize Page Load
         await page.setRequestInterception(true);
