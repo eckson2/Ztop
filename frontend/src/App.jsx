@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
-import { LayoutDashboard, Settings, Shield, LogOut, Zap, Smartphone, FileText, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Settings, Shield, LogOut, Zap, Smartphone, FileText, MessageSquare, CreditCard } from 'lucide-react';
 
 import { Login, Register } from './pages/Auth';
 import SetupWizard from './pages/SetupWizard';
 import Instances from './pages/Instances';
 import AdminUsers from './pages/AdminUsers';
 import AutoTest from './pages/AutoTest';
+import Subscription from './pages/Subscription';
 import PrivateRoute from './components/PrivateRoute';
 import { useAuth } from './contexts/AuthContext';
 import api from './api';
-import LiveChat from './pages/LiveChat'; // [NEW] Import
 
 const Dashboard = () => {
   const [metrics, setMetrics] = useState({ total: 0, in: 0, out: 0 });
+  const [autoTestMetrics, setAutoTestMetrics] = useState({ generated: 0, failed: 0 });
+  const [whatsappStatus, setWhatsappStatus] = useState({ connected: false, provider: '' });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,29 +25,82 @@ const Dashboard = () => {
         setMetrics(data);
       } catch (e) {
         console.error('Erro ao carregar métricas:', e);
+      }
+    };
+
+    const fetchAutoTestMetrics = async () => {
+      try {
+        const { data } = await api.get('/autotest');
+        setAutoTestMetrics({ generated: data.generatedCount || 0, failed: data.failedCount || 0 });
+      } catch (e) {
+        console.error('Erro ao carregar métricas AutoTest:', e);
+      }
+    };
+
+    const fetchWhatsAppStatus = async () => {
+      try {
+        const { data } = await api.get('/whatsapp');
+        const instance = data.instance || data;
+        setWhatsappStatus({
+          connected: instance?.status === 'connected',
+          provider: instance?.provider || 'Nenhuma'
+        });
+      } catch (e) {
+        console.error('Erro ao carregar status WhatsApp:', e);
       } finally {
         setLoading(false);
       }
     };
+
     fetchMetrics();
-    const interval = setInterval(fetchMetrics, 30000);
+    fetchAutoTestMetrics();
+    fetchWhatsAppStatus();
+
+    const interval = setInterval(() => {
+      fetchMetrics();
+      fetchAutoTestMetrics();
+      fetchWhatsAppStatus();
+    }, 30000);
+
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="p-8 max-w-5xl mx-auto">
+    <div className="p-8 max-w-6xl mx-auto">
       <h1 className="text-4xl font-bold gradient-text mb-2">Seu Dashboard</h1>
-      <p className="text-slate-400 mb-10">Status de uso mensal (Plano Free)</p>
+      <p className="text-slate-400 mb-6">Visão geral do sistema</p>
+
+      {/* WhatsApp Status */}
+      <div className="mb-6 glass p-6 rounded-3xl">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={`w-4 h-4 rounded-full ${whatsappStatus.connected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+            <div>
+              <p className="text-sm font-medium text-slate-400">Status WhatsApp</p>
+              <p className={`text-lg font-bold ${whatsappStatus.connected ? 'text-green-400' : 'text-red-400'}`}>
+                {whatsappStatus.connected ? 'Conectado' : 'Desconectado'}
+              </p>
+            </div>
+          </div>
+          {whatsappStatus.provider && (
+            <div className="text-right">
+              <p className="text-sm text-slate-500">Provedor</p>
+              <p className="text-sm font-medium text-white">{whatsappStatus.provider === 'evolution' ? 'Api Premium' : whatsappStatus.provider === 'uazapi' ? 'Api Secundaria' : whatsappStatus.provider}</p>
+            </div>
+          )}
+        </div>
+      </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-pulse">
-          {[1, 2, 3].map(i => <div key={i} className="h-32 glass rounded-3xl" />)}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-pulse">
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-32 glass rounded-3xl" />)}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatsCard label="Testes Gerados" value={autoTestMetrics.generated} color="text-blue-400" />
+          <StatsCard label="Falhas" value={autoTestMetrics.failed} color="text-red-400" />
           <StatsCard label="Mensagens Recebidas" value={metrics.in || 0} />
           <StatsCard label="Mensagens Enviadas" value={metrics.out || 0} />
-          <StatsCard label="Limite Mensal" value="Ilimitado" color="text-emerald-400" />
         </div>
       )}
     </div>
@@ -120,10 +175,8 @@ const Layout = ({ children }) => {
       `}>
         <div className="flex items-center justify-between mb-10">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary-500 rounded-lg shadow-lg shadow-primary-500/20">
-              <Zap size={24} className="text-white" />
-            </div>
-            <span className="font-bold text-xl tracking-tight">BotSaaS</span>
+            <img src="/ztop-logo.png" alt="ZTop" className="w-10 h-10 object-contain" />
+            <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">ZTop</span>
           </div>
           {/* Close button for mobile inside sidebar */}
           <button onClick={() => setMobileMenuOpen(false)} className="md:hidden p-2 text-slate-400">
@@ -133,12 +186,14 @@ const Layout = ({ children }) => {
 
         <nav className="space-y-2">
           <SidebarItem icon={<LayoutDashboard size={20} />} label="Dashboard" to="/" />
-          <SidebarItem icon={<MessageSquare size={20} />} label="Atendimento" to="/chat" />
           <SidebarItem icon={<Settings size={20} />} label="Configurar BOT" to="/setup" />
           <SidebarItem icon={<Smartphone size={20} />} label="WhatsApp" to="/instances" />
 
           {/* [NEW] AutoTest Sidebar Item */}
           <SidebarItem icon={<FileText size={20} />} label="Teste Automático" to="/autotest" />
+
+          {/* [NEW] Subscription Sidebar Item */}
+          <SidebarItem icon={<CreditCard size={20} />} label="Renovar Assinatura" to="/subscription" />
 
           <div className="pt-6 mt-6 border-t border-white/10 space-y-2">
             {user?.role === 'ADMIN' && (
@@ -171,10 +226,10 @@ const App = () => {
             <Layout>
               <Routes>
                 <Route path="/" element={<Dashboard />} />
-                <Route path="/chat" element={<LiveChat />} />
                 <Route path="/setup" element={<SetupWizard />} />
                 <Route path="/instances" element={<Instances />} />
                 <Route path="/autotest" element={<AutoTest />} /> {/* [NEW] Route */}
+                <Route path="/subscription" element={<Subscription />} /> {/* [NEW] Subscription Route */}
                 <Route path="/admin" element={<AdminUsers />} />
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>

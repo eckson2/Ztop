@@ -126,11 +126,11 @@ const Instances = () => {
                     <div className="max-w-md mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
                         <label className={`p-4 rounded-xl border transition-all cursor-pointer ${provider === 'evolution' ? 'border-primary-500 bg-primary-500/10' : 'border-white/10 bg-white/5 hover:border-white/30'}`}>
                             <input type="radio" name="provider" className="hidden" onClick={() => setProvider('evolution')} checked={provider === 'evolution'} />
-                            <span className="font-medium text-white flex items-center gap-2"><Smartphone size={18} /> Evolution API</span>
+                            <span className="font-medium text-white flex items-center gap-2"><Smartphone size={18} /> Api Premium</span>
                         </label>
                         <label className={`p-4 rounded-xl border transition-all cursor-pointer ${provider === 'uazapi' ? 'border-primary-500 bg-primary-500/10' : 'border-white/10 bg-white/5 hover:border-white/30'}`}>
                             <input type="radio" name="provider" className="hidden" onClick={() => setProvider('uazapi')} checked={provider === 'uazapi'} />
-                            <span className="font-medium text-white flex items-center gap-2"><Smartphone size={18} /> UazAPI</span>
+                            <span className="font-medium text-white flex items-center gap-2"><Smartphone size={18} /> Api Secundaria</span>
                         </label>
                     </div>
 

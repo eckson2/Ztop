@@ -1,9 +1,6 @@
 const axios = require('axios');
-// Force Update Trigger v2
 const https = require('https');
-const cheerio = require('cheerio');
 const { PrismaClient } = require('@prisma/client');
-const { runNinjaScraper } = require('../services/koffice.scraper');
 const prisma = new PrismaClient();
 
 const handleFulfillment = async (req, res) => {
@@ -116,150 +113,96 @@ const handleFulfillment = async (req, res) => {
             const senderPhone = remoteJid.replace(/\D/g, '');
             const senderName = originalPayload?.data?.pushName || 'Cliente';
 
-            // --- KOFFICE WEB SCRAPER MODE ---
-            // Detect if the user is using the "AutoTest" Web URL (HTML Form) instead of API
-            // OR if the user explicitly selected 'koffice' panel type (Ninja Mode)
-            if (config.panelType === 'koffice' || (config.apiUrl && config.apiUrl.includes('/autotest/'))) {
-                console.log(`[FULFILLMENT] KOFFICE SCRAPER MODE ACTIVATED`);
+            // --- LEGACY/API MODE (QPannel/AutoReply style) ---
+            console.log(`[FULFILLMENT] GENERIC API MODE`);
+            const params = new URLSearchParams();
+            params.append('msg', realMessage);
+            params.append('message', realMessage);
+            params.append('text', realMessage);
+            params.append('sender', senderPhone);
+            params.append('from', senderPhone);
+            params.append('number', senderPhone);
+            params.append('name', senderName);
+            params.append('package', 'com.whatsapp');
 
-                try {
-                    // Use new "Ninja" Scraper with Puppeteer
-                    console.log(`[FULFILLMENT] Starting Koffice Ninja Scraper...`);
-
-                    // Defaults (will be configurable later via AutoTestConfig)
-                    const dashboardUrl = config.dashboardUrl || 'https://a.opengl.in/login/';
-                    const dashUser = config.dashboardUser || 'brtvtop';
-                    const dashPass = config.dashboardPass || '56xtv23';
-
-                    const scrapeResult = await runNinjaScraper(dashboardUrl, dashUser, dashPass);
-
-                    if (!scrapeResult.success) {
-                        throw new Error(scrapeResult.error || 'Erro desconhecido no Scraper Ninja');
-                    }
-
-                    const html = scrapeResult.html;
-                    console.log('[FULFILLMENT SCRAPER] HTML Received from Puppeteer. Parsing...');
-
-                    // 3. Parse HTML (Same Logic)
-                    const $ = cheerio.load(html);
-                    const bodyText = $('body').text();
-
-                    // Extract Credentials using Regex
-                    const userMatch = bodyText.match(/Usuário:\s*([^\s\n]+)/i);
-                    const passMatch = bodyText.match(/Senha:\s*([^\s\n]+)/i);
-                    const expireMatch = bodyText.match(/Vencimento:\s*([^\n]+)/i);
-                    const urlMatch = bodyText.match(/URL SMARTERS:\s*([^\s\n]+)/i) || bodyText.match(/http[s]?:\/\/[^\s\n]+/);
-
-                    if (userMatch && passMatch) {
-                        data = {
-                            username: userMatch[1].trim(),
-                            password: passMatch[1].trim(),
-                            expiresAtFormatted: expireMatch ? expireMatch[1].trim() : 'TESTE GERADO',
-                            package: 'Teste Automático (Ninja)',
-                            dns: urlMatch ? urlMatch[1].trim() : 'Verif. no App',
-                            payUrl: 'Solicite ao atendente'
-                        };
-                        console.log('[FULFILLMENT SCRAPER] Success:', JSON.stringify(data));
-                    } else {
-                        throw new Error('Não foi possível ler os dados do modal. HTML pode ter mudado.');
-                    }
-
-                } catch (err) {
-                    console.error('[FULFILLMENT SCRAPER ERROR]', err.message);
-                    throw err;
-                }
-
-            } else {
-                // --- LEGACY/API MODE (AutoReply style) ---
-                console.log(`[FULFILLMENT] KOFFICE API MODE (AutoReply)`);
-                const params = new URLSearchParams();
-                params.append('msg', realMessage);
-                params.append('message', realMessage);
-                params.append('text', realMessage);
-                params.append('sender', senderPhone);
-                params.append('from', senderPhone);
-                params.append('number', senderPhone);
-                params.append('name', senderName);
-                params.append('package', 'com.whatsapp');
-
-                try {
-                    const httpsAgent = new https.Agent({ rejectUnauthorized: false });
-                    console.log(`[FULFILLMENT] Sending API Payload:`, params.toString());
-                    apiResponse = await axios.post(config.apiUrl, params.toString(), {
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        httpsAgent
-                    });
-                    data = apiResponse.data;
-                    console.log('[FULFILLMENT] API Response:', JSON.stringify(data));
-                } catch (err) {
-                    console.error('[FULFILLMENT API ERROR]', err.message);
-                    throw err;
-                }
+            try {
+                const httpsAgent = new https.Agent({ rejectUnauthorized: false });
+                console.log(`[FULFILLMENT] Sending API Payload:`, params.toString());
+                apiResponse = await axios.post(config.apiUrl, params.toString(), {
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    httpsAgent
+                });
+                data = apiResponse.data;
+                console.log('[FULFILLMENT] API Response:', JSON.stringify(data));
+            } catch (err) {
+                console.error('[FULFILLMENT API ERROR]', err.message);
+                throw err;
             }
         }
+    }
 
         console.log('[FULFILLMENT] Final Data:', JSON.stringify(data));
 
-        // 3. Parse Template Fields
-        const fields = JSON.parse(config.templateFields || '{}');
+    // 3. Parse Template Fields
+    const fields = JSON.parse(config.templateFields || '{}');
 
-        // Build Response
-        let responseLines = [];
+    // Build Response
+    let responseLines = [];
 
-        // Show Name (Customizable)
-        responseLines.push(`Nome: ${config.nameField || 'Tops'}`);
+    // Show Name (Customizable)
+    responseLines.push(`Nome: ${config.nameField || 'Tops'}`);
 
-        // [NEW] App Name Configurable
-        if (fields.appName && config.appName) {
-            responseLines.push(`📱 Aplicativo: ${config.appName}`);
-        }
-
-        if (fields.username) responseLines.push(`✅ Usuário: ${data.username || data.usuario || 'N/A'}`);
-        if (fields.password) responseLines.push(`✅ Senha: ${data.password || data.senha || 'N/A'}`);
-        if (fields.dns) responseLines.push(`🌐 DNS: ${data.dns || 'N/A'}`);
-        if (fields.plano) responseLines.push(`📦 Plano: ${data.package || data.Plano || data.plano || 'N/A'}`);
-        if (fields.vencimento) responseLines.push(`🗓️ Vencimento: ${data.expiresAtFormatted || data.Vencimento || data.vencimento || 'N/A'}`);
-
-        // [NEW] Custom M3U Link with Placeholder Replacement
-        if (fields.m3uLink && config.m3uLink) {
-            const userVal = data.username || data.usuario || data.user || '';
-            const passVal = data.password || data.senha || data.pass || '';
-
-            let m3u = config.m3uLink;
-            m3u = m3u.replace(/{username}/g, userVal)
-                .replace(/{password}/g, passVal)
-                .replace(/{user}/g, userVal)
-                .replace(/{pass}/g, passVal);
-
-            responseLines.push(`🟢 Link M3U: ${m3u}`);
-        }
-
-        // [NEW] Custom Payment or Default
-        if (fields.customPaymentUrl && config.customPaymentUrl) {
-            responseLines.push(`💳 Link de Pagamento: ${config.customPaymentUrl}`);
-        } else if (fields.pagamento) {
-            responseLines.push(`💳 Assinar/Renovar Plano: ${data.payUrl || data['Pagamento Automatico'] || data.pagamento_automatico || 'N/A'}`);
-        }
-
-        const responseText = responseLines.join('\n');
-
-        // 4. Update Success Stats
-        await prisma.autoTestConfig.update({
-            where: { userId },
-            data: { generatedCount: { increment: 1 } }
-        });
-
-        // Return to Dialogflow
-        return res.json({
-            fulfillmentText: responseText
-        });
-
-    } catch (error) {
-        console.error('[FULFILLMENT ERROR]', error.message);
-        return res.json({
-            fulfillmentText: 'Desculpe, ocorreu um erro ao gerar o teste. Tente novamente mais tarde.'
-        });
+    // [NEW] App Name Configurable
+    if (fields.appName && config.appName) {
+        responseLines.push(`📱 Aplicativo: ${config.appName}`);
     }
+
+    if (fields.username) responseLines.push(`✅ Usuário: ${data.username || data.usuario || 'N/A'}`);
+    if (fields.password) responseLines.push(`✅ Senha: ${data.password || data.senha || 'N/A'}`);
+    if (fields.dns) responseLines.push(`🌐 DNS: ${data.dns || 'N/A'}`);
+    if (fields.plano) responseLines.push(`📦 Plano: ${data.package || data.Plano || data.plano || 'N/A'}`);
+    if (fields.vencimento) responseLines.push(`🗓️ Vencimento: ${data.expiresAtFormatted || data.Vencimento || data.vencimento || 'N/A'}`);
+
+    // [NEW] Custom M3U Link with Placeholder Replacement
+    if (fields.m3uLink && config.m3uLink) {
+        const userVal = data.username || data.usuario || data.user || '';
+        const passVal = data.password || data.senha || data.pass || '';
+
+        let m3u = config.m3uLink;
+        m3u = m3u.replace(/{username}/g, userVal)
+            .replace(/{password}/g, passVal)
+            .replace(/{user}/g, userVal)
+            .replace(/{pass}/g, passVal);
+
+        responseLines.push(`🟢 Link M3U: ${m3u}`);
+    }
+
+    // [NEW] Custom Payment or Default
+    if (fields.customPaymentUrl && config.customPaymentUrl) {
+        responseLines.push(`💳 Link de Pagamento: ${config.customPaymentUrl}`);
+    } else if (fields.pagamento) {
+        responseLines.push(`💳 Assinar/Renovar Plano: ${data.payUrl || data['Pagamento Automatico'] || data.pagamento_automatico || 'N/A'}`);
+    }
+
+    const responseText = responseLines.join('\n');
+
+    // 4. Update Success Stats
+    await prisma.autoTestConfig.update({
+        where: { userId },
+        data: { generatedCount: { increment: 1 } }
+    });
+
+    // Return to Dialogflow
+    return res.json({
+        fulfillmentText: responseText
+    });
+
+} catch (error) {
+    console.error('[FULFILLMENT ERROR]', error.message);
+    return res.json({
+        fulfillmentText: 'Desculpe, ocorreu um erro ao gerar o teste. Tente novamente mais tarde.'
+    });
+}
 };
 
 module.exports = { handleFulfillment };

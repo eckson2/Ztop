@@ -18,6 +18,11 @@ model User {
   expirationDate DateTime?
   plan          String   @default("free")   // free, pro, enterprise
   webhookToken  String   @unique @default(uuid())
+  
+  // Subscription Management
+  subscriptionExpiresAt DateTime?
+  lastRenewalAt        DateTime?
+  
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -34,7 +39,7 @@ model AutoTestConfig {
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   isEnabled      Boolean  @default(false)
-  panelType      String   @default("sigma") // sigma, pfast, koffice, warez
+  panelType      String   @default("sigma") // sigma, pfast
   apiUrl         String   @default("")
   nameField      String   @default("Tops")
   
@@ -47,10 +52,7 @@ model AutoTestConfig {
   appName        String   @default("") // Custom App Name
   customPaymentUrl String @default("") // Custom Payment Link
 
-  // Koffice Ninja Spec
-  dashboardUrl   String   @default("")
-  dashboardUser  String   @default("")
-  dashboardPass  String   @default("")
+
   
   // Stores which fields are enabled to show: { username: true, password: true, dns: true, ... }
   templateFields String   @default("{}") 
@@ -112,7 +114,6 @@ model ChatSession {
   
   remoteJid      String
   botSessionId   String?  // Para Typebot ou Dialogflow
-  isBotActive    Boolean  @default(true) // [NEW] Handoff control
   lastStatusChange DateTime?
   lastInteraction DateTime @default(now())
 

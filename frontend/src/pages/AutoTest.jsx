@@ -158,7 +158,7 @@ const AutoTest = () => {
                             <div>
                                 <label className="block text-sm font-medium text-slate-400 mb-2">Tipo de Painel</label>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                    {['sigma', 'pfast', 'koffice', 'warez'].map((type) => (
+                                    {['sigma', 'pfast'].map((type) => (
                                         <button
                                             key={type}
                                             onClick={() => setConfig({ ...config, panelType: type })}
@@ -207,62 +207,6 @@ const AutoTest = () => {
                                 </div>
                                 <div className="md:col-span-2 text-xs text-slate-500">
                                     Essas credenciais são usadas para autenticar na API do Pfast (api.painelcliente.com).
-                                </div>
-                            </div>
-                        ) : config.panelType === 'koffice' ? (
-                            <div className="space-y-4">
-                                <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-                                    <h3 className="text-emerald-400 font-bold mb-2 flex items-center gap-2">
-                                        <Zap size={18} /> Modo Ninja (Puppeteer)
-                                    </h3>
-                                    <p className="text-xs text-emerald-200/70 mb-4">
-                                        O sistema irá acessar o painel automaticamente (via navegador invisível) para gerar o teste, ignorando captchas e lentidão.
-                                    </p>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="md:col-span-2">
-                                            <label className="block text-sm font-medium text-slate-400 mb-2">URL do Dashboard (Login)</label>
-                                            <input
-                                                type="text"
-                                                value={config.dashboardUrl || ''}
-                                                onChange={(e) => setConfig({ ...config, dashboardUrl: e.target.value })}
-                                                placeholder="https://a.opengl.in/login/"
-                                                className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-emerald-500 transition-colors"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-400 mb-2">Usuário do Painel</label>
-                                            <input
-                                                type="text"
-                                                value={config.dashboardUser || ''}
-                                                onChange={(e) => setConfig({ ...config, dashboardUser: e.target.value })}
-                                                placeholder="Usuario"
-                                                className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-emerald-500 transition-colors"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-400 mb-2">Senha do Painel</label>
-                                            <input
-                                                type="text"
-                                                value={config.dashboardPass || ''}
-                                                onChange={(e) => setConfig({ ...config, dashboardPass: e.target.value })}
-                                                placeholder="******"
-                                                className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-emerald-500 transition-colors"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="opacity-50 hover:opacity-100 transition-opacity">
-                                    <label className="block text-sm font-medium text-slate-400 mb-2">URL Pública / Scraper Antigo (Opcional)</label>
-                                    <input
-                                        type="text"
-                                        value={config.apiUrl || ''}
-                                        onChange={(e) => setConfig({ ...config, apiUrl: e.target.value })}
-                                        placeholder="https://a.opengl.in/autotest/..."
-                                        className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-primary-500 transition-colors"
-                                    />
-                                    <p className="text-[10px] text-slate-500 mt-1">Se preenchido com url /autotest/, o sistema usará o método antigo. Deixe vazio para usar o Ninja (se configurado).</p>
                                 </div>
                             </div>
                         ) : (
