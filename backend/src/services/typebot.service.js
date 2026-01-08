@@ -1,7 +1,7 @@
 const axios = require('axios');
 const { decrypt } = require('../utils/crypto');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+// Prisma Client singleton
+const prisma = require('../utils/prisma');
 
 class TypebotService {
     static async getResponse(config, userId, remoteJid, text) {

@@ -1,5 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+// Prisma Client singleton
+const prisma = require('../utils/prisma');
 
 // Get Config
 const getConfig = async (req, res) => {

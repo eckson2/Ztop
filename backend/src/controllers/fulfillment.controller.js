@@ -1,7 +1,7 @@
 const axios = require('axios');
 const https = require('https');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+// Prisma Client singleton
+const prisma = require('../utils/prisma');
 
 const handleFulfillment = async (req, res) => {
     const { userId } = req.params;

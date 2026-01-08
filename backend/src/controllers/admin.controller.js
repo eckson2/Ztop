@@ -1,6 +1,6 @@
-const { PrismaClient } = require('@prisma/client');
+// Prisma Client singleton
 const bcrypt = require('bcryptjs');
-const prisma = new PrismaClient();
+const prisma = require('../utils/prisma');
 
 // List all users
 const listUsers = async (req, res) => {

@@ -18,8 +18,8 @@ const authMiddleware = async (req, res, next) => {
         req.userId = decoded.userId;
 
         // Fetch user context for role checking
-        const { PrismaClient } = require('@prisma/client');
-        const prisma = new PrismaClient();
+        // Prisma Client singleton
+        const prisma = require('../utils/prisma');
 
         const user = await prisma.user.findUnique({
             where: { id: decoded.userId }

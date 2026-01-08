@@ -1,5 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+// Prisma Client singleton
+const prisma = require('../utils/prisma');
 const { encrypt } = require('../utils/crypto');
 const WhatsAppService = require('../services/whatsapp.service');
 

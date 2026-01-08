@@ -1,5 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+// Prisma Client singleton
+const prisma = require('../utils/prisma');
 const DialogflowService = require('../services/dialogflow.service');
 const TypebotService = require('../services/typebot.service');
 const WhatsAppService = require('../services/whatsapp.service');

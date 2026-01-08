@@ -1,7 +1,7 @@
-const { PrismaClient } = require('@prisma/client');
+// Prisma Client singleton
 const ciabraService = require('../services/ciabra.service');
 
-const prisma = new PrismaClient();
+const prisma = require('../utils/prisma');
 
 /**
  * Generate PIX payment for subscription renewal

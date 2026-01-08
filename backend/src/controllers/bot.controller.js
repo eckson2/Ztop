@@ -1,5 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+// Prisma Client singleton
+const prisma = require('../utils/prisma');
 const { encrypt, decrypt } = require('../utils/crypto');
 
 const getConfig = async (req, res) => {
