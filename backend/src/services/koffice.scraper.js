@@ -55,25 +55,31 @@ const runNinjaScraper = async (dashboardUrl, username, password) => {
                 break; // Passed!
             }
 
-            console.log('[KOFFICE NINJA] Cloudflare detected. Attempting to solve...');
+            console.log('[KOFFICE NINJA] Cloudflare detected. Scanning frames for challenge...');
 
-            // 3.1 Mouse Wiggle to prove humanity
+            // 3.1 Random Mouse Wiggle
             try {
-                // Random mouse movement is key
                 await page.mouse.move(100 + Math.random() * 200, 100 + Math.random() * 200);
-                await page.mouse.move(300 + Math.random() * 200, 300 + Math.random() * 200);
             } catch (e) { /* ignore */ }
 
-            // 3.2 Try to click Challenge Checkbox
-            const challengeSelector = '#challenge-stage, iframe[src*="cloudflare"]';
-            try {
-                const challengeFrame = await page.$(challengeSelector);
-                if (challengeFrame) {
-                    console.log('[KOFFICE NINJA] Found potential challenge element. Hovering/Clicking...');
-                    await challengeFrame.hover();
-                    await challengeFrame.click();
-                }
-            } catch (e) { /* ignore */ }
+            // 3.2 Deep Frame Search & Click
+            const frames = page.frames();
+            for (const frame of frames) {
+                try {
+                    const url = frame.url();
+                    // Look for Cloudflare/Turnstile frames
+                    if (url.includes('cloudflare') || url.includes('turnstile') || url.includes('challenge')) {
+                        console.log(`[KOFFICE NINJA] Found Challenge Frame: ${url}`);
+                        const checkbox = await frame.$('input[type="checkbox"], div.ctp-checkbox-label, #challenge-stage');
+                        if (checkbox) {
+                            console.log('[KOFFICE NINJA] Clicking Challenge Checkbox inside frame...');
+                            await checkbox.hover();
+                            await checkbox.click();
+                            await new Promise(r => setTimeout(r, 2000)); // Wait for verification
+                        }
+                    }
+                } catch (err) { /* ignore frame access errors */ }
+            }
 
             await new Promise(r => setTimeout(r, 5000));
             retries++;
@@ -90,10 +96,12 @@ const runNinjaScraper = async (dashboardUrl, username, password) => {
         try {
             await page.waitForSelector(passSelector, { timeout: 30000 }); // Increased to 30s
         } catch (e) {
-            // Debug: Screenshot or detailed logs could go here
-            console.log('[KOFFICE NINJA] Timeout waiting for inputs. Dumping HTML snippet...');
-            const htmlSnippet = await page.content();
-            console.log(htmlSnippet.substring(0, 500)); // Log first 500 chars to see if blocked
+            // Debug: Dump Body Text to see the actual error message (e.g. Error 1020)
+            console.log('[KOFFICE NINJA] Timeout waiting for inputs. Dumping PAGE TEXT...');
+            const bodyText = await page.evaluate(() => document.body.innerText);
+            console.log('\n--- PAGE TEXT DUMP START ---\n');
+            console.log(bodyText.substring(0, 1000));
+            console.log('\n--- PAGE TEXT DUMP END ---\n');
             throw e;
         }
 
