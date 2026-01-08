@@ -127,8 +127,7 @@ const handleWebhook = async (req, res) => {
             chatSession = await prisma.chatSession.create({
                 data: {
                     userId: user.id,
-                    remoteJid: remoteJid,
-                    isBotActive: true
+                    remoteJid: remoteJid
                 }
             });
         }
