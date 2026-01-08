@@ -43,11 +43,10 @@ const generatePix = async (req, res) => {
             throw new Error('Parcela não encontrada na fatura');
         }
 
-        // [FIX] Fetch payment details immediately to get the QR Code
-        // (The creation response often does not include the QR code string)
         const paymentDetails = await ciabraService.getPaymentDetails(installmentId);
 
-        console.log('[SUBSCRIPTION] Payment details fetched. Validating QR Code...');
+        console.log('[SUBSCRIPTION] Payment details fetched:', JSON.stringify(paymentDetails));
+        console.log('[SUBSCRIPTION] Validating QR Code...');
 
         // Return payment data with guaranteed QR Code
         return res.json({
