@@ -81,6 +81,14 @@ const checkPayment = async (req, res) => {
         // Get payment details
         const payment = await ciabraService.getPaymentDetails(installmentId);
 
+        // [DEBUG] Log payment checking to see if status/emv updates
+        if (payment && !Array.isArray(payment)) {
+            console.log(`[SUBSCRIPTION] Poll Invoice ${invoiceId}: Status=${payment?.pix?.status} EMV=${payment?.pix?.emv ? 'YES' : 'NO'}`);
+            if (payment?.pix?.status !== 'GENERATING') {
+                console.log(`[SUBSCRIPTION] Full PIX Data:`, JSON.stringify(payment.pix));
+            }
+        }
+
         // Check if paid (handle both object and array responses)
         let isPaid = false;
         let pixData = null;
