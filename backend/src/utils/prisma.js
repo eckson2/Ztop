@@ -1,4 +1,4 @@
-// Prisma Client singleton
+const { PrismaClient } = require('@prisma/client');
 
 // Singleton pattern to prevent "Too many clients" error
 let prisma;
