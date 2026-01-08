@@ -145,10 +145,8 @@ const Layout = ({ children }) => {
       {/* [NEW] Mobile Topbar */}
       <div className="md:hidden flex items-center justify-between p-4 glass sticky top-0 z-40 border-b border-white/5">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-primary-500 rounded-lg shadow-lg shadow-primary-500/20">
-            <Zap size={20} className="text-white" />
-          </div>
-          <span className="font-bold text-lg tracking-tight">BotSaaS</span>
+          <img src="/ztop-logo.png" alt="ZTop" className="w-8 h-8 object-contain" />
+          <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">ZTop</span>
         </div>
         <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-slate-300 hover:bg-white/10 rounded-lg">
           {mobileMenuOpen ? <LogOut className="rotate-180" size={24} /> : <div className="space-y-1.5">

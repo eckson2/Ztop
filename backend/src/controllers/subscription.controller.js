@@ -36,22 +36,28 @@ const generatePix = async (req, res) => {
         );
         console.log(`[SUBSCRIPTION] Invoice created: ${invoice.id}`);
 
-        // Get installment data for QR Code
-        const installment = invoice.installments?.[0];
+        // Get installment data 
+        const installmentId = invoice.installments?.[0]?.id;
 
-        if (!installment) {
+        if (!installmentId) {
             throw new Error('Parcela não encontrada na fatura');
         }
 
-        // Return payment data
+        // [FIX] Fetch payment details immediately to get the QR Code
+        // (The creation response often does not include the QR code string)
+        const paymentDetails = await ciabraService.getPaymentDetails(installmentId);
+
+        console.log('[SUBSCRIPTION] Payment details fetched. Validating QR Code...');
+
+        // Return payment data with guaranteed QR Code
         return res.json({
             success: true,
             invoiceId: invoice.id,
-            installmentId: installment.id,
+            installmentId: installmentId,
             amount: amount,
-            qrCode: installment.pixQrCode || null,
-            pixCopyPaste: installment.pixCopyPaste || null,
-            expiresAt: installment.dueDate
+            qrCode: paymentDetails.pixQrCode || paymentDetails.pix_qr_code || null, // Check snake_case just in case
+            pixCopyPaste: paymentDetails.pixCopyPaste || paymentDetails.pix_copy_paste || null,
+            expiresAt: paymentDetails.dueDate || invoice.installments[0].dueDate
         });
 
     } catch (error) {

@@ -152,8 +152,8 @@ const Subscription = () => {
                                     <button
                                         onClick={copyToClipboard}
                                         className={`px-6 rounded-xl font-bold transition-all ${copied
-                                                ? 'bg-green-500 text-white'
-                                                : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                            ? 'bg-green-500 text-white'
+                                            : 'bg-blue-600 hover:bg-blue-700 text-white'
                                             }`}
                                     >
                                         {copied ? <CheckCircle size={20} /> : <Copy size={20} />}
@@ -228,9 +228,10 @@ const Subscription = () => {
                     <p className="text-sm font-bold text-white">💎 Plano Mensal</p>
                 </div>
 
-                <div className="mb-6">
-                    <p className="text-6xl font-black gradient-text mb-2">R$ 50</p>
-                    <p className="text-slate-400 text-lg">,00 por mês</p>
+                <div className="mb-6 flex items-baseline justify-center gap-1">
+                    <span className="text-6xl font-black gradient-text">R$ 50</span>
+                    <span className="text-3xl font-bold text-slate-400">,00</span>
+                    <span className="text-slate-400 text-lg ml-1">por mês</span>
                 </div>
 
                 <div className="space-y-3 mb-8 text-left max-w-sm mx-auto">
