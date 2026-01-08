@@ -132,7 +132,22 @@ const checkPayment = async (req, res) => {
         }
 
         if (isPaid) {
-            // ... (existing success block) ...
+            // Update user subscription
+            const currentDate = new Date();
+            const newExpirationDate = new Date(currentDate);
+            newExpirationDate.setMonth(newExpirationDate.getMonth() + 1); // Add 1 month
+
+            await prisma.user.update({
+                where: { id: userId },
+                data: {
+                    subscriptionExpiresAt: newExpirationDate,
+                    lastRenewalAt: currentDate,
+                    expirationDate: newExpirationDate // Update legacy field too
+                }
+            });
+
+            console.log(`[SUBSCRIPTION] User ${userId} renewed until ${newExpirationDate}`);
+
             return res.json({
                 success: true,
                 paid: true,
