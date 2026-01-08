@@ -70,12 +70,29 @@ const runNinjaScraper = async (dashboardUrl, username, password) => {
                     // Look for Cloudflare/Turnstile frames
                     if (url.includes('cloudflare') || url.includes('turnstile') || url.includes('challenge')) {
                         console.log(`[KOFFICE NINJA] Found Challenge Frame: ${url}`);
-                        const checkbox = await frame.$('input[type="checkbox"], div.ctp-checkbox-label, #challenge-stage');
+                        const checkbox = await frame.$('input[type="checkbox"], div.ctp-checkbox-label, #challenge-stage, .mark');
                         if (checkbox) {
-                            console.log('[KOFFICE NINJA] Clicking Challenge Checkbox inside frame...');
-                            await checkbox.hover();
-                            await checkbox.click();
-                            await new Promise(r => setTimeout(r, 2000)); // Wait for verification
+                            console.log('[KOFFICE NINJA] Clicking Challenge Checkbox inside frame (HUMAN MODE)...');
+
+                            // Advanced Human Click: Move mouse to coordinates with jitter, then click
+                            const box = await checkbox.boundingBox();
+                            if (box) {
+                                // Calculate center with random offset
+                                const x = box.x + (box.width / 2) + ((Math.random() - 0.5) * 5);
+                                const y = box.y + (box.height / 2) + ((Math.random() - 0.5) * 5);
+
+                                console.log(`[KOFFICE NINJA] Mouse move to ${x.toFixed(0)},${y.toFixed(0)}`);
+                                await page.mouse.move(x, y, { steps: 5 }); // Smooth move
+                                await new Promise(r => setTimeout(r, 100 + Math.random() * 200));
+
+                                await page.mouse.down();
+                                await new Promise(r => setTimeout(r, 50 + Math.random() * 50));
+                                await page.mouse.up();
+                            } else {
+                                // Fallback if no box (hidden element?)
+                                await checkbox.click();
+                            }
+                            await new Promise(r => setTimeout(r, 3000)); // Wait for verification
                         }
                     }
                 } catch (err) { /* ignore frame access errors */ }
