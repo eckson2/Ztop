@@ -65,12 +65,16 @@ const Layout = ({ children }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // [NEW] State for mobile menu
 
   const SidebarItem = ({ icon, label, to }) => {
     const isActive = location.pathname === to;
     return (
       <button
-        onClick={() => navigate(to)}
+        onClick={() => {
+          navigate(to);
+          setMobileMenuOpen(false); // Close menu on mobile click
+        }}
         className={`flex items-center gap-3 p-3 w-full rounded-xl transition-all ${isActive ? 'bg-primary-500/20 text-primary-400 font-medium' : 'text-slate-400 hover:bg-white/5'
           }`}
       >
@@ -81,14 +85,50 @@ const Layout = ({ children }) => {
   };
 
   return (
-    <div className="flex">
-      {/* Sidebar */}
-      <aside className="w-64 glass min-h-screen p-6 hidden md:block sticky top-0 h-screen overflow-y-auto">
-        <div className="flex items-center gap-3 mb-10">
-          <div className="p-2 bg-primary-500 rounded-lg shadow-lg shadow-primary-500/20">
-            <Zap size={24} className="text-white" />
+    <div className="flex flex-col md:flex-row min-h-screen">
+
+      {/* [NEW] Mobile Topbar */}
+      <div className="md:hidden flex items-center justify-between p-4 glass sticky top-0 z-40 border-b border-white/5">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-primary-500 rounded-lg shadow-lg shadow-primary-500/20">
+            <Zap size={20} className="text-white" />
           </div>
-          <span className="font-bold text-xl tracking-tight">BotSaaS</span>
+          <span className="font-bold text-lg tracking-tight">BotSaaS</span>
+        </div>
+        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-slate-300 hover:bg-white/10 rounded-lg">
+          {mobileMenuOpen ? <LogOut className="rotate-180" size={24} /> : <div className="space-y-1.5">
+            <span className="block w-6 h-0.5 bg-current"></span>
+            <span className="block w-6 h-0.5 bg-current"></span>
+            <span className="block w-6 h-0.5 bg-current"></span>
+          </div>}
+        </button>
+      </div>
+
+      {/* [NEW] Mobile Backdrop */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar - Responsive */}
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-64 glass p-6 overflow-y-auto transition-transform duration-300 ease-in-out
+        md:sticky md:top-0 md:h-screen md:translate-x-0 md:block
+        ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <div className="flex items-center justify-between mb-10">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary-500 rounded-lg shadow-lg shadow-primary-500/20">
+              <Zap size={24} className="text-white" />
+            </div>
+            <span className="font-bold text-xl tracking-tight">BotSaaS</span>
+          </div>
+          {/* Close button for mobile inside sidebar */}
+          <button onClick={() => setMobileMenuOpen(false)} className="md:hidden p-2 text-slate-400">
+            <LogOut className="rotate-180" size={20} />
+          </button>
         </div>
 
         <nav className="space-y-2">
@@ -113,7 +153,7 @@ const Layout = ({ children }) => {
       </aside>
 
       {/* Content */}
-      <main className="flex-1 min-h-screen bg-slate-900/50">
+      <main className="flex-1 min-h-screen bg-slate-900/50 p-4 md:p-8">
         {children}
       </main>
     </div>

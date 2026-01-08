@@ -146,9 +146,9 @@ const AutoTest = () => {
                                     onChange={(e) => setConfig({ ...config, isEnabled: e.target.checked })}
                                     className="sr-only peer"
                                 />
-                                <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
-                                <span className="ml-3 text-sm font-medium text-slate-300">
-                                    {config.isEnabled ? 'Ativado' : 'Desativado'}
+                                <div className={`w-11 h-6 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all ${config.isEnabled ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+                                <span className={`ml-3 text-sm font-bold ${config.isEnabled ? 'text-emerald-400' : 'text-red-400'}`}>
+                                    {config.isEnabled ? 'ATIVADO' : 'DESATIVADO'}
                                 </span>
                             </label>
                         </div>
@@ -162,9 +162,9 @@ const AutoTest = () => {
                                         <button
                                             key={type}
                                             onClick={() => setConfig({ ...config, panelType: type })}
-                                            className={`p-3 rounded-xl border transition-all capitalized flex flex-col items-center gap-2 ${config.panelType === type
-                                                ? 'bg-primary-500/20 border-primary-500 text-white'
-                                                : 'bg-black/20 border-white/5 text-slate-400 hover:bg-white/5'
+                                            className={`p-3 rounded-xl border-2 transition-all capitalized flex flex-col items-center gap-2 ${config.panelType === type
+                                                ? 'bg-blue-600 border-blue-400 text-white shadow-lg shadow-blue-500/20 scale-105'
+                                                : 'bg-black/20 border-white/5 text-slate-400 hover:bg-white/10 hover:border-white/20'
                                                 }`}
                                         >
                                             <Globe size={18} />
