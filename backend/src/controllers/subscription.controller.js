@@ -133,8 +133,18 @@ const checkPayment = async (req, res) => {
 
         if (isPaid) {
             // Update user subscription
+            // Fetch current user data to check existing expiration
+            const currentUser = await prisma.user.findUnique({ where: { id: userId } });
+
             const currentDate = new Date();
-            const newExpirationDate = new Date(currentDate);
+            let baseDate = currentDate;
+
+            // If user has a valid future expiration, add time to THAT date
+            if (currentUser && currentUser.subscriptionExpiresAt && new Date(currentUser.subscriptionExpiresAt) > currentDate) {
+                baseDate = new Date(currentUser.subscriptionExpiresAt);
+            }
+
+            const newExpirationDate = new Date(baseDate);
             newExpirationDate.setMonth(newExpirationDate.getMonth() + 1); // Add 1 month
 
             await prisma.user.update({

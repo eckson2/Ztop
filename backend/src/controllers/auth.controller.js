@@ -12,8 +12,18 @@ const register = async (req, res) => {
 
         const passwordHash = await bcrypt.hash(password, 10);
 
+        // Calculate 2-day trial expiration
+        const trialExpiresAt = new Date();
+        trialExpiresAt.setDate(trialExpiresAt.getDate() + 2);
+
         const user = await prisma.user.create({
-            data: { name, email, passwordHash }
+            data: {
+                name,
+                email,
+                passwordHash,
+                subscriptionExpiresAt: trialExpiresAt,
+                expirationDate: trialExpiresAt // Legacy field support
+            }
         });
 
         res.status(201).json({ message: 'Usuário criado com sucesso' });

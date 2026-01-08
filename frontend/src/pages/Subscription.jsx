@@ -133,12 +133,12 @@ const Subscription = () => {
                     <div className="glass p-8 rounded-3xl">
                         {/* QR Code Display */}
                         {paymentData.pixCopyPaste ? (
-                            <div className="bg-white p-6 rounded-2xl mb-6 flex justify-center">
+                            <div className="bg-white p-3 rounded-2xl mb-6 flex justify-center">
                                 {/* Generate QR from EMV string */}
                                 <QRCodeSVG value={paymentData.pixCopyPaste} size={256} />
                             </div>
                         ) : paymentData.qrCode ? (
-                            <div className="bg-white p-6 rounded-2xl mb-6 flex justify-center">
+                            <div className="bg-white p-3 rounded-2xl mb-6 flex justify-center">
                                 <img
                                     src={paymentData.qrCode}
                                     alt="QR Code PIX"
