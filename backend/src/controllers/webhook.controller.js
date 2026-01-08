@@ -139,12 +139,13 @@ const handleWebhook = async (req, res) => {
         });
 
         // [HANDOFF] If Bot is Paused (Human mode), stop here.
-        if (!chatSession.isBotActive) {
-            console.log(`[HANDOFF] Bot paused for ${remoteJid}. Message ignored by bot engine.`);
-            return res.sendStatus(200);
-        } else {
-            console.log(`[DEBUG] Bot ACTIVE for ${remoteJid}. Proceeding to engine.`);
-        }
+        // [HANDOFF] Logic disabled because isBotActive field is missing from DB schema
+        // if (!chatSession.isBotActive) {
+        //    console.log(`[HANDOFF] Bot paused for ${remoteJid}. Message ignored by bot engine.`);
+        //    return res.sendStatus(200);
+        // } 
+
+        console.log(`[DEBUG] Bot ACTIVE for ${remoteJid}. Proceeding to engine.`);
 
         let responses = [];
         try {
