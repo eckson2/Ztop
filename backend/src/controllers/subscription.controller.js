@@ -3,6 +3,27 @@ const ciabraService = require('../services/ciabra.service');
 
 const prisma = require('../utils/prisma');
 
+// Helper to recursively find PIX EMV code (starts with 000201)
+function findPixCode(obj) {
+    if (!obj || typeof obj !== 'object') return null;
+    if (typeof obj === 'string' && obj.startsWith('000201')) return obj;
+
+    for (let key in obj) {
+        const val = obj[key];
+        // Direct key check
+        if (['pixCode', 'emv', 'brCode', 'qrCode', 'pixCopyPaste', 'pix_copy_paste'].includes(key) &&
+            typeof val === 'string' && val.startsWith('000201')) {
+            return val;
+        }
+        // Recursive check
+        if (typeof val === 'object') {
+            const found = findPixCode(val);
+            if (found) return found;
+        }
+    }
+    return null;
+}
+
 /**
  * Generate PIX payment for subscription renewal
  */
@@ -43,10 +64,13 @@ const generatePix = async (req, res) => {
             throw new Error('Parcela não encontrada na fatura');
         }
 
+        // Fetch payment details immediately
         const paymentDetails = await ciabraService.getPaymentDetails(installmentId);
 
-        console.log('[SUBSCRIPTION] Payment details fetched:', JSON.stringify(paymentDetails));
-        console.log('[SUBSCRIPTION] Validating QR Code...');
+        console.log('[SUBSCRIPTION] Payment details fetched. Searching for QR Code...');
+
+        // [FIX] Use Deep Search like in ciabra-pix project
+        const emvCode = findPixCode(paymentDetails);
 
         // Return payment data with guaranteed QR Code
         return res.json({
@@ -54,8 +78,8 @@ const generatePix = async (req, res) => {
             invoiceId: invoice.id,
             installmentId: installmentId,
             amount: amount,
-            qrCode: paymentDetails.pixQrCode || paymentDetails.pix_qr_code || null, // Check snake_case just in case
-            pixCopyPaste: paymentDetails.pixCopyPaste || paymentDetails.pix_copy_paste || null,
+            qrCode: null, // Frontend generates from emv
+            pixCopyPaste: emvCode || null,
             expiresAt: paymentDetails.dueDate || invoice.installments[0].dueDate
         });
 
@@ -118,14 +142,17 @@ const checkPayment = async (req, res) => {
         }
 
         // Return updated PIX data for polling (QRCode might appear later)
+        // [FIX] Use Deep Search here too
+        const emvCode = findPixCode(payment);
+
         return res.json({
             success: true,
             paid: false,
             message: 'Aguardando pagamento...',
             // Pass updated fields if available
-            pixUpdate: pixData ? {
-                qrCode: pixData.location, // URL if available
-                pixCopyPaste: pixData.emv // EMV string for generation
+            pixUpdate: emvCode ? {
+                qrCode: null, // Frontend generates
+                pixCopyPaste: emvCode
             } : null
         });
 
