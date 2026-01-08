@@ -76,8 +76,13 @@ const checkPayment = async (req, res) => {
         // Get payment details
         const payment = await ciabraService.getPaymentDetails(installmentId);
 
-        // Check if paid
-        const isPaid = payment.some(p => p.status === 'CONFIRMED' || p.status === 'PAID');
+        // Check if paid (handle both object and array responses)
+        let isPaid = false;
+        if (Array.isArray(payment)) {
+            isPaid = payment.some(p => p.status === 'CONFIRMED' || p.status === 'PAID');
+        } else if (payment && typeof payment === 'object') {
+            isPaid = payment.status === 'CONFIRMED' || payment.status === 'PAID';
+        }
 
         if (isPaid) {
             // Update user subscription
