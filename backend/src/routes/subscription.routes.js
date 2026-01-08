@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { authenticate } = require('../middleware/auth');
+const authMiddleware = require('../middleware/auth');
 const subscriptionController = require('../controllers/subscription.controller');
 
 // All routes require authentication
-router.use(authenticate);
+router.use(authMiddleware);
 
 // Get current subscription status
 router.get('/status', subscriptionController.getSubscriptionStatus);
