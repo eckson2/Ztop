@@ -52,6 +52,11 @@ model AutoTestConfig {
   appName        String   @default("") // Custom App Name
   customPaymentUrl String @default("") // Custom Payment Link
 
+  // Dashboard Credentials (Generic / Qpannel)
+  dashboardUrl   String   @default("")
+  dashboardUser  String   @default("")
+  dashboardPass  String   @default("")
+
 
   
   // Stores which fields are enabled to show: { username: true, password: true, dns: true, ... }

@@ -158,7 +158,7 @@ const AutoTest = () => {
                             <div>
                                 <label className="block text-sm font-medium text-slate-400 mb-2">Tipo de Painel</label>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                    {['sigma', 'pfast'].map((type) => (
+                                    {['sigma', 'pfast', 'qpannel'].map((type) => (
                                         <button
                                             key={type}
                                             onClick={() => setConfig({ ...config, panelType: type })}
@@ -176,8 +176,8 @@ const AutoTest = () => {
 
                         </div>
 
-                        {/* Pfast Credentials OR Generic API URL */}
-                        {config.panelType === 'pfast' ? (
+                        {/* Pfast Credentials */}
+                        {config.panelType === 'pfast' && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-400 mb-2">Token Pfast</label>
@@ -209,7 +209,10 @@ const AutoTest = () => {
                                     Essas credenciais são usadas para autenticar na API do Pfast (api.painelcliente.com).
                                 </div>
                             </div>
-                        ) : (
+                        )}
+
+                        {/* Sigma / Generic */}
+                        {config.panelType === 'sigma' && (
                             <div>
                                 <label className="block text-sm font-medium text-slate-400 mb-2">URL de POST do Teste Automático</label>
                                 <input
@@ -220,6 +223,44 @@ const AutoTest = () => {
                                     className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-primary-500 transition-colors"
                                 />
                                 <p className="text-xs text-slate-500 mt-2">Insira a URL fornecida pelo seu painel para geração de testes.</p>
+                            </div>
+                        )}
+
+                        {/* Qpannel Inputs */}
+                        {config.panelType === 'qpannel' && (
+                            <div className="grid grid-cols-1 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-400 mb-2">URL do Painel (Qpannel)</label>
+                                    <input
+                                        type="text"
+                                        value={config.dashboardUrl || ''}
+                                        onChange={(e) => setConfig({ ...config, dashboardUrl: e.target.value })}
+                                        placeholder="https://painel.exemplo.com"
+                                        className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-primary-500 transition-colors"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-400 mb-2">Usuário</label>
+                                        <input
+                                            type="text"
+                                            value={config.dashboardUser || ''}
+                                            onChange={(e) => setConfig({ ...config, dashboardUser: e.target.value })}
+                                            placeholder="admin"
+                                            className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-primary-500 transition-colors"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-400 mb-2">Senha</label>
+                                        <input
+                                            type="password"
+                                            value={config.dashboardPass || ''}
+                                            onChange={(e) => setConfig({ ...config, dashboardPass: e.target.value })}
+                                            placeholder="••••••"
+                                            className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-primary-500 transition-colors"
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         )}
 
