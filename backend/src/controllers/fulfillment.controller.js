@@ -139,70 +139,69 @@ const handleFulfillment = async (req, res) => {
                 throw err;
             }
         }
-    }
 
         console.log('[FULFILLMENT] Final Data:', JSON.stringify(data));
 
-    // 3. Parse Template Fields
-    const fields = JSON.parse(config.templateFields || '{}');
+        // 3. Parse Template Fields
+        const fields = JSON.parse(config.templateFields || '{}');
 
-    // Build Response
-    let responseLines = [];
+        // Build Response
+        let responseLines = [];
 
-    // Show Name (Customizable)
-    responseLines.push(`Nome: ${config.nameField || 'Tops'}`);
+        // Show Name (Customizable)
+        responseLines.push(`Nome: ${config.nameField || 'Tops'}`);
 
-    // [NEW] App Name Configurable
-    if (fields.appName && config.appName) {
-        responseLines.push(`📱 Aplicativo: ${config.appName}`);
+        // [NEW] App Name Configurable
+        if (fields.appName && config.appName) {
+            responseLines.push(`📱 Aplicativo: ${config.appName}`);
+        }
+
+        if (fields.username) responseLines.push(`✅ Usuário: ${data.username || data.usuario || 'N/A'}`);
+        if (fields.password) responseLines.push(`✅ Senha: ${data.password || data.senha || 'N/A'}`);
+        if (fields.dns) responseLines.push(`🌐 DNS: ${data.dns || 'N/A'}`);
+        if (fields.plano) responseLines.push(`📦 Plano: ${data.package || data.Plano || data.plano || 'N/A'}`);
+        if (fields.vencimento) responseLines.push(`🗓️ Vencimento: ${data.expiresAtFormatted || data.Vencimento || data.vencimento || 'N/A'}`);
+
+        // [NEW] Custom M3U Link with Placeholder Replacement
+        if (fields.m3uLink && config.m3uLink) {
+            const userVal = data.username || data.usuario || data.user || '';
+            const passVal = data.password || data.senha || data.pass || '';
+
+            let m3u = config.m3uLink;
+            m3u = m3u.replace(/{username}/g, userVal)
+                .replace(/{password}/g, passVal)
+                .replace(/{user}/g, userVal)
+                .replace(/{pass}/g, passVal);
+
+            responseLines.push(`🟢 Link M3U: ${m3u}`);
+        }
+
+        // [NEW] Custom Payment or Default
+        if (fields.customPaymentUrl && config.customPaymentUrl) {
+            responseLines.push(`💳 Link de Pagamento: ${config.customPaymentUrl}`);
+        } else if (fields.pagamento) {
+            responseLines.push(`💳 Assinar/Renovar Plano: ${data.payUrl || data['Pagamento Automatico'] || data.pagamento_automatico || 'N/A'}`);
+        }
+
+        const responseText = responseLines.join('\n');
+
+        // 4. Update Success Stats
+        await prisma.autoTestConfig.update({
+            where: { userId },
+            data: { generatedCount: { increment: 1 } }
+        });
+
+        // Return to Dialogflow
+        return res.json({
+            fulfillmentText: responseText
+        });
+
+    } catch (error) {
+        console.error('[FULFILLMENT ERROR]', error.message);
+        return res.json({
+            fulfillmentText: 'Desculpe, ocorreu um erro ao gerar o teste. Tente novamente mais tarde.'
+        });
     }
-
-    if (fields.username) responseLines.push(`✅ Usuário: ${data.username || data.usuario || 'N/A'}`);
-    if (fields.password) responseLines.push(`✅ Senha: ${data.password || data.senha || 'N/A'}`);
-    if (fields.dns) responseLines.push(`🌐 DNS: ${data.dns || 'N/A'}`);
-    if (fields.plano) responseLines.push(`📦 Plano: ${data.package || data.Plano || data.plano || 'N/A'}`);
-    if (fields.vencimento) responseLines.push(`🗓️ Vencimento: ${data.expiresAtFormatted || data.Vencimento || data.vencimento || 'N/A'}`);
-
-    // [NEW] Custom M3U Link with Placeholder Replacement
-    if (fields.m3uLink && config.m3uLink) {
-        const userVal = data.username || data.usuario || data.user || '';
-        const passVal = data.password || data.senha || data.pass || '';
-
-        let m3u = config.m3uLink;
-        m3u = m3u.replace(/{username}/g, userVal)
-            .replace(/{password}/g, passVal)
-            .replace(/{user}/g, userVal)
-            .replace(/{pass}/g, passVal);
-
-        responseLines.push(`🟢 Link M3U: ${m3u}`);
-    }
-
-    // [NEW] Custom Payment or Default
-    if (fields.customPaymentUrl && config.customPaymentUrl) {
-        responseLines.push(`💳 Link de Pagamento: ${config.customPaymentUrl}`);
-    } else if (fields.pagamento) {
-        responseLines.push(`💳 Assinar/Renovar Plano: ${data.payUrl || data['Pagamento Automatico'] || data.pagamento_automatico || 'N/A'}`);
-    }
-
-    const responseText = responseLines.join('\n');
-
-    // 4. Update Success Stats
-    await prisma.autoTestConfig.update({
-        where: { userId },
-        data: { generatedCount: { increment: 1 } }
-    });
-
-    // Return to Dialogflow
-    return res.json({
-        fulfillmentText: responseText
-    });
-
-} catch (error) {
-    console.error('[FULFILLMENT ERROR]', error.message);
-    return res.json({
-        fulfillmentText: 'Desculpe, ocorreu um erro ao gerar o teste. Tente novamente mais tarde.'
-    });
-}
 };
 
 module.exports = { handleFulfillment };
