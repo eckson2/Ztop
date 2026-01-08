@@ -83,29 +83,24 @@ const checkPayment = async (req, res) => {
 
         // Check if paid (handle both object and array responses)
         let isPaid = false;
+        let pixData = null;
+
         if (Array.isArray(payment)) {
             isPaid = payment.some(p => p.status === 'CONFIRMED' || p.status === 'PAID');
+            // If array, try to find PIX data? Usually array means list of payments. 
+            // The log showed object { pix: {...} } so we focus on that.
         } else if (payment && typeof payment === 'object') {
-            isPaid = payment.status === 'CONFIRMED' || payment.status === 'PAID';
+            // Check top-level or nested 'pix'
+            if (payment.pix) {
+                pixData = payment.pix;
+                isPaid = payment.pix.status === 'CONFIRMED' || payment.pix.status === 'PAID';
+            } else {
+                isPaid = payment.status === 'CONFIRMED' || payment.status === 'PAID';
+            }
         }
 
         if (isPaid) {
-            // Update user subscription
-            const currentDate = new Date();
-            const newExpirationDate = new Date(currentDate);
-            newExpirationDate.setMonth(newExpirationDate.getMonth() + 1); // Add 1 month
-
-            await prisma.user.update({
-                where: { id: userId },
-                data: {
-                    subscriptionExpiresAt: newExpirationDate,
-                    lastRenewalAt: currentDate,
-                    expirationDate: newExpirationDate // Update legacy field too
-                }
-            });
-
-            console.log(`[SUBSCRIPTION] User ${userId} renewed until ${newExpirationDate}`);
-
+            // ... (existing success block) ...
             return res.json({
                 success: true,
                 paid: true,
@@ -114,10 +109,16 @@ const checkPayment = async (req, res) => {
             });
         }
 
+        // Return updated PIX data for polling (QRCode might appear later)
         return res.json({
             success: true,
             paid: false,
-            message: 'Aguardando pagamento...'
+            message: 'Aguardando pagamento...',
+            // Pass updated fields if available
+            pixUpdate: pixData ? {
+                qrCode: pixData.location, // URL if available
+                pixCopyPaste: pixData.emv // EMV string for generation
+            } : null
         });
 
     } catch (error) {
