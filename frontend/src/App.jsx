@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
-import { LayoutDashboard, Settings, Shield, LogOut, Zap, Smartphone, FileText, MessageSquare, CreditCard } from 'lucide-react';
+import { LayoutDashboard, Settings, Shield, LogOut, Zap, Smartphone, FileText, MessageSquare, CreditCard, Users, Server, DollarSign } from 'lucide-react';
 
 import { Login, Register } from './pages/Auth';
 import SetupWizard from './pages/SetupWizard';
@@ -19,13 +19,7 @@ import ClientForm from './pages/clients/ClientForm'; // [NEW]
 import BotDashboard from './pages/marketing/BotDashboard'; // [NEW]
 import PrivateRoute from './components/PrivateRoute';
 import { useAuth } from './contexts/AuthContext';
-// ...
-          <SidebarItem icon={<LayoutDashboard size={20} />} label="Dashboard" to="/" />
-          <SidebarItem icon={<Users size={20} />} label="Clientes" to="/customers" /> {/* [NEW] */ }
-// ...
-<Route path="/marketing/templates" element={<MessageTemplates />} /> {/* [NEW] Templates */ }
-<Route path="/customers" element={<ClientsList />} /> {/* [NEW] Clients Route */ }
-<Route path="/admin" element={<AdminUsers />} />
+
 import api from './api';
 import {
   BarChart3, PenTool // [NEW] Icons
@@ -126,6 +120,7 @@ const Layout = ({ children }) => {
 
         <nav className="space-y-2">
           <SidebarItem icon={<LayoutDashboard size={20} />} label="Dashboard" to="/" />
+          <SidebarItem icon={<Users size={20} />} label="Clientes" to="/customers" />
 
           {/* Chatbot Group */}
           <SidebarGroup icon={<MessageSquare size={20} />} label="Chatbot">

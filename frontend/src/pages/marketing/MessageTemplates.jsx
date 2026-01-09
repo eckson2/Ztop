@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit, Save, X, Image as ImageIcon } from 'lucide-react';
-import api from '../api';
+import api from '../../api';
 
 const MessageTemplates = () => {
     const [templates, setTemplates] = useState([]);
