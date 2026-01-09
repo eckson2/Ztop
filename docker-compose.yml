@@ -24,9 +24,8 @@ services:
 
   # 4. Backend (Node.js)
   backend:
-    image: ghcr.io/eckson2/ztop-backend:v4
-    # pull_policy: always # Swarm defaults to pulling if not found, but 'always' forces check
-    # pull_policy: always # Swarm defaults to pulling if not found, but 'always' forces check
+    image: ztop-backend:local
+    pull_policy: never
     environment:
       - DATABASE_URL=postgresql://botsaas:botsaas_secure_pass@postgres:5432/ztop_db
       - JWT_SECRET=${JWT_SECRET:-change_me_in_prod}
@@ -50,7 +49,7 @@ services:
         - "traefik.http.services.ztop-back.loadbalancer.server.port=3000"
         # CORS Middleware
         - "traefik.http.middlewares.ztop-cors.headers.accesscontrolallowmethods=GET,POST,OPTIONS,PUT,DELETE"
-        - "traefik.http.middlewares.ztop-cors.headers.accesscontrolalloworiginlist=https://ztop.dev.br,https://www.ztop.dev.br"
+        - "traefik.http.middlewares.ztop-cors.headers.accesscontrolalloworiginlist=https://ztop.dev.br"
         - "traefik.http.middlewares.ztop-cors.headers.accesscontrolmaxage=100"
         - "traefik.http.middlewares.ztop-cors.headers.addvaryheader=true"
         - "traefik.http.middlewares.ztop-cors.headers.accesscontrolallowcredentials=true"
@@ -59,7 +58,8 @@ services:
 
   # 5. Frontend (React + Nginx)
   frontend:
-    image: ghcr.io/eckson2/ztop-frontend:latest
+    image: ztop-frontend:local
+    pull_policy: never
     environment:
       - VITE_API_URL=https://back.ztop.dev.br/api
     networks:
