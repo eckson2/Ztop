@@ -1,4 +1,6 @@
-FROM node:18
+FROM node:18-alpine
+
+ENV APP_VERSION=v4
 
 WORKDIR /app
 

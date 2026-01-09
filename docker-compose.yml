@@ -24,7 +24,7 @@ services:
 
   # 4. Backend (Node.js)
   backend:
-    image: ghcr.io/eckson2/ztop-backend:v3
+    image: ghcr.io/eckson2/ztop-backend:v4
     # pull_policy: always # Swarm defaults to pulling if not found, but 'always' forces check
     # pull_policy: always # Swarm defaults to pulling if not found, but 'always' forces check
     environment:
