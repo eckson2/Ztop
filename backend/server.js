@@ -1,29 +1,30 @@
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 const app = express();
 
-const corsOptions = {
-    origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
+// Manual CORS to guarantee headers are set
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    // Allow ztop.dev.br (prod) and localhost (dev)
+    if (origin && (origin.includes('ztop.dev.br') || origin.includes('localhost'))) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+    }
 
-        const allowedOrigins = [process.env.FRONTEND_URL, 'https://ztop.dev.br', 'https://www.ztop.dev.br', 'http://localhost:5173', 'http://localhost:3000'];
-        if (allowedOrigins.indexOf(origin) !== -1 || origin.includes('ztop.dev.br')) {
-            callback(null, true);
-        } else {
-            console.log('Blocked by CORS:', origin);
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true
-};
+    // Handle preflight
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
 
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // Enable pre-flight for all routes
+    next();
+});
+
+// app.use(cors(corsOptions)); // Disabled in favor of manual control
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
