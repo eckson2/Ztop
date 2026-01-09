@@ -24,10 +24,7 @@ services:
 
   # 4. Backend (Node.js)
   backend:
-    image: ztop-backend:latest
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: ghcr.io/eckson2/ztop-backend:latest
     command: sh -c "npx prisma migrate deploy && npm start"
     environment:
       - DATABASE_URL=postgresql://botsaas:botsaas_secure_pass@postgres:5432/ztop_db
@@ -49,10 +46,7 @@ services:
 
   # 5. Frontend (React + Nginx)
   frontend:
-    image: ztop-frontend:latest
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: ghcr.io/eckson2/ztop-frontend:latest
     environment:
       - VITE_API_URL=https://back.ztop.dev.br/api
     networks:
