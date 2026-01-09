@@ -48,6 +48,14 @@ services:
         - "traefik.http.routers.ztop-back.entrypoints=websecure"
         - "traefik.http.routers.ztop-back.tls.certresolver=letsencryptresolver"
         - "traefik.http.services.ztop-back.loadbalancer.server.port=3000"
+        # CORS Middleware
+        - "traefik.http.middlewares.ztop-cors.headers.accesscontrolallowmethods=GET,POST,OPTIONS,PUT,DELETE"
+        - "traefik.http.middlewares.ztop-cors.headers.accesscontrolalloworiginlist=https://ztop.dev.br,https://www.ztop.dev.br"
+        - "traefik.http.middlewares.ztop-cors.headers.accesscontrolmaxage=100"
+        - "traefik.http.middlewares.ztop-cors.headers.addvaryheader=true"
+        - "traefik.http.middlewares.ztop-cors.headers.accesscontrolallowcredentials=true"
+        - "traefik.http.middlewares.ztop-cors.headers.accesscontrolallowheaders=Content-Type,Authorization,X-Requested-With"
+        - "traefik.http.routers.ztop-back.middlewares=ztop-cors"
 
   # 5. Frontend (React + Nginx)
   frontend:
