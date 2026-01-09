@@ -44,9 +44,6 @@ model User {
   paymentConfig  PaymentConfig?
   paymentMethods ManualPaymentMethod[]
   templates      MessageTemplate[]
-
-  sendingCategory   SendingCategory? @relation(fields: [sendingCategoryId], references: [id])
-  sendingCategoryId String?
 }
 
 model SendingCategory {
