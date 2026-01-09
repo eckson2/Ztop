@@ -34,6 +34,7 @@ jobs:
           tags: |
             ghcr.io/eckson2/ztop-backend:latest
             ghcr.io/eckson2/ztop-backend:v2
+            ghcr.io/eckson2/ztop-backend:v3
 
       - name: Build and push Frontend
         uses: docker/build-push-action@v4
