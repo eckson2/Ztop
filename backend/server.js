@@ -7,11 +7,23 @@ const prisma = new PrismaClient();
 const app = express();
 
 const corsOptions = {
-    origin: [process.env.FRONTEND_URL, 'https://ztop.dev.br', 'https://www.ztop.dev.br', 'http://localhost:5173', 'http://localhost:3000'],
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+
+        const allowedOrigins = [process.env.FRONTEND_URL, 'https://ztop.dev.br', 'https://www.ztop.dev.br', 'http://localhost:5173', 'http://localhost:3000'];
+        if (allowedOrigins.indexOf(origin) !== -1 || origin.includes('ztop.dev.br')) {
+            callback(null, true);
+        } else {
+            console.log('Blocked by CORS:', origin);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true
 };
 
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Enable pre-flight for all routes
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
