@@ -40,18 +40,32 @@ const webhookRoutes = require('./src/routes/webhook.routes');
 const fulfillmentRoutes = require('./src/routes/fulfillment.routes'); // [NEW] Dialogflow Fulfillment
 const autotestRoutes = require('./src/routes/autotest.routes'); // [NEW] AutoTest Config
 const subscriptionRoutes = require('./src/routes/subscription.routes'); // [NEW] Subscription
+const productRoutes = require('./src/routes/product.routes'); // [NEW] Products (Integrations)
+const paymentRoutes = require('./src/routes/payment.routes'); // [NEW] Payment Config
+const templateRoutes = require('./src/routes/template.routes'); // [NEW] Templates
+const financialRoutes = require('./src/routes/financial.routes'); // [NEW] Financial Logs
+const customerRoutes = require('./src/routes/customer.routes'); // [NEW] Customers
 const adminRoutes = require('./src/routes/admin.routes');
 const metricsRoutes = require('./src/routes/metrics.routes');
+const sendingRoutes = require('./src/routes/sending.routes'); // [NEW]
+const publicPaymentRoutes = require('./src/routes/public.payment.routes'); // [NEW]
 
 app.use('/api/auth', authRoutes);
 app.use('/api/bots', botRoutes);
 app.use('/api/whatsapp', waRoutes);
 app.use('/api/webhook', webhookRoutes);
 app.use('/api/fulfillment', fulfillmentRoutes);
-app.use('/api/autotest', autotestRoutes); // [NEW] Endpoint
-app.use('/api/subscription', subscriptionRoutes); // [NEW] Subscription
+app.use('/api/autotest', autotestRoutes);
+app.use('/api/subscription', subscriptionRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/templates', templateRoutes);
+app.use('/api/financial', financialRoutes);
+app.use('/api/customers', customerRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/metrics', metricsRoutes);
+app.use('/api/sending', sendingRoutes); // [NEW]
+app.use('/api/public/checkout', publicPaymentRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

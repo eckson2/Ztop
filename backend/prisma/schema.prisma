@@ -29,8 +29,58 @@ model User {
   botConfig      BotConfig?
   whatsappInstance WhatsAppInstance?
   autoTestConfig AutoTestConfig?
+  sendingConfig  SendingConfig?
+  sendingCategories SendingCategory[] // [NEW]
   chatSessions   ChatSession[]
   messageLogs    MessageLog[]
+
+  // CRM Modules
+  products       Product[]
+  plans          Plan[]
+  apps           App[]
+  customers      Customer[]
+  transactions   FinancialTransaction[]
+  campaigns      MarketingCampaign[]
+  paymentConfig  PaymentConfig?
+  paymentMethods ManualPaymentMethod[]
+  templates      MessageTemplate[]
+
+  sendingCategory   SendingCategory? @relation(fields: [sendingCategoryId], references: [id])
+  sendingCategoryId String?
+}
+
+model SendingCategory {
+  id        String   @id @default(uuid())
+  name      String
+  active    Boolean  @default(true)
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  
+  rules     SendingRule[]
+  customers Customer[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SendingRule {
+  id           String   @id @default(uuid())
+  
+  category     SendingCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId   String
+  
+  template     MessageTemplate? @relation(fields: [templateId], references: [id])
+  templateId   String?
+  
+  daysOffset   Int      @default(0) // -1 (Late), 0 (Due), 1 (Before)
+  timeToSend   String   @default("09:00") // HH:mm
+  weekDays     String   @default("0,1,2,3,4,5,6") // "0,1,2"
+  
+  active       Boolean  @default(true)
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model AutoTestConfig {
@@ -57,8 +107,6 @@ model AutoTestConfig {
   dashboardUser  String   @default("")
   dashboardPass  String   @default("")
 
-
-  
   // Stores which fields are enabled to show: { username: true, password: true, dns: true, ... }
   templateFields String   @default("{}") 
   
@@ -75,7 +123,17 @@ model MessageLog {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   direction String   // in, out
-  type      String   // text, image, etc.
+  type      String   // text, image, template
+  status    String   @default("sent") // sent, delivered, read, failed, pending
+  
+  to        String?  // Remote JID / Phone
+  content   String?  // Body text
+  
+  campaignId String?
+  campaign   MarketingCampaign? @relation(fields: [campaignId], references: [id])
+  
+  error      String?
+  
   createdAt DateTime @default(now())
 }
 
@@ -123,4 +181,249 @@ model ChatSession {
   lastInteraction DateTime @default(now())
 
   @@unique([userId, remoteJid])
+}
+
+// --------------------
+// CRM MODULES
+// --------------------
+
+model Product {
+  id          String   @id @default(uuid())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+
+  name        String   // Ex: PlayFast, CloudPlay
+  
+  // Server Connection
+  type        String   @default("generic") // generic, playfast, sigma, etc
+  serverUrl   String?
+  apiUser     String?
+  apiPass     String?
+  
+  // Specific API Creds
+  apiToken    String?  // For Pfast/Others using token
+  apiSecret   String?  // For Pfast Secret Key
+  
+  // Auto Renewal Logic
+  autoRenewIPTV Boolean @default(false) // Toggle: Renovate on Panel?
+  
+  plans       Plan[]
+  customers   Customer[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Plan {
+  id          String   @id @default(uuid())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId   String
+
+  name        String   // Ex: Mensal 40
+  price       Float    // Ex: 40.00
+  duration    Int      // Ex: 30 (days) or 1 (months). Let's use days for flexibility or implement logic
+  description String?
+  
+  customers   Customer[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model App {
+  id            String   @id @default(uuid())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+  
+  name          String   // Ex: Duplex Play
+  activationCost Float   @default(0.0)
+  description   String?
+  
+  customerApps  CustomerApp[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Customer {
+  id            String   @id @default(uuid())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+  
+  name          String
+  phone         String   // Whatsapp
+  email         String?
+  cpf           String?
+  birthDate     DateTime?
+  notes         String?
+  
+  origin        String?  // Indicação, Instagram, etc
+  indicatorId   String?  // Outro cliente que indicou? (Future)
+  
+  loyaltyPoints Int      @default(0) // Pontos de Fidelidade
+  
+  // Billing Config
+  autoRenew     Boolean  @default(true) // Renovação Automática do plano
+  sendWarnings  Boolean  @default(true) // Enviar avisos de vencimento
+  
+  // IPTV Subscription
+  iptvUsername  String?
+  iptvPassword  String?
+  macAddress    String?
+  
+  expirationDate DateTime?
+  
+  product       Product? @relation(fields: [productId], references: [id])
+  productId     String?
+  
+  plan          Plan?    @relation(fields: [planId], references: [id])
+  planId        String?
+  
+  status        String   @default("active") // active, inactive, expired
+  
+  apps          CustomerApp[]
+  transactions  FinancialTransaction[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model CustomerApp {
+  id          String   @id @default(uuid())
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId  String
+  
+  app         App      @relation(fields: [appId], references: [id], onDelete: Cascade)
+  appId       String
+  
+  expirationDate DateTime?
+  
+  createdAt   DateTime @default(now())
+}
+
+model FinancialTransaction {
+  id          String   @id @default(uuid())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  
+  customer    Customer? @relation(fields: [customerId], references: [id])
+  customerId  String?
+  
+  type        String   // income (Entrada), expense (Saída)
+  amount      Float
+  category    String   // Renovação, Venda App, Servidor (Despesa), etc
+  description String?
+  
+  // Payment Method Tracking
+  method      String   @default("manual") // manual, gateway
+  gateway     String?  // ciabra, mp, etc
+  manualMethodId String?
+  manualMethod   ManualPaymentMethod? @relation(fields: [manualMethodId], references: [id])
+  
+  status      String   @default("approved") // approved, pending, failed
+  
+  date        DateTime @default(now())
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SendingConfig {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  minDelay       Int      @default(20) // Segundos (min)
+  maxDelay       Int      @default(60) // Segundos (max)
+  
+  batchSize      Int      @default(10) // Mensagens por lote
+  batchDelay     Int      @default(60) // Pausa após lote (segundos)
+  
+  dailyLimit     Int?     // Limite diário (opcional)
+  isActive       Boolean  @default(true)
+  
+  updatedAt      DateTime @updatedAt
+}
+
+model MarketingCampaign {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name           String
+  messageTemplate String?
+  
+  status         String   @default("pending") // pending, running, paused, completed, failed
+  
+  totalContacts  Int      @default(0)
+  sentCount      Int      @default(0)
+  failedCount    Int      @default(0)
+  
+  scheduledAt    DateTime?
+  completedAt    DateTime?
+  
+  messageLogs    MessageLog[]
+  
+  createdAt      DateTime @default(now())
+}
+
+model PaymentConfig {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Active Gateway
+  activeGateway  String   @default("none") // ciabra, mp, etc
+  
+  // Ciabra Credentials
+  ciabraPublic   String?
+  ciabraPrivate  String?  // Encrypted
+  
+  // Checkout Display Options
+  showName       Boolean  @default(true)
+  showCpf        Boolean  @default(true)
+  showWhatsapp   Boolean  @default(true)
+  
+  // Notifications
+  notifyAdmin    Boolean  @default(true)
+  adminPhone     String?  // WhatsApp to receive alerts
+  notifyClient   Boolean  @default(true)
+  
+  // Templates (Editable)
+  templateAdmin  String?  @db.Text // "🔔 Novo Pagamento Recebido!..."
+  templateClient String?  @db.Text // "Sua assinatura foi renovada..."
+  
+  updatedAt      DateTime @updatedAt
+}
+
+model ManualPaymentMethod {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name           String   // Ex: Nubank PIX
+  type           String   // pix, bank_transfer, cash
+  details        String?  // Chave PIX, Dados bancários
+  
+  transactions   FinancialTransaction[]
+  
+  createdAt      DateTime @default(now())
+}
+
+model MessageTemplate {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name           String   // Identificador do template
+  content        String   @db.Text
+  type           String   @default("general") // renewal, billing, welcome, thanks
+  
+  mediaUrl       String?  // Optional media attachment
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }

@@ -8,121 +8,63 @@ import Instances from './pages/Instances';
 import AdminUsers from './pages/AdminUsers';
 import AutoTest from './pages/AutoTest';
 import Subscription from './pages/Subscription';
+import Integrations from './pages/Integrations';
+import PaymentSettings from './pages/PaymentSettings';
+import CiabraConfig from './pages/payment/CiabraConfig';
+import PaymentLogs from './pages/financial/PaymentLogs'; // [NEW]
+import ManualMethods from './pages/financial/ManualMethods'; // [NEW]
+import MessageTemplates from './pages/marketing/MessageTemplates'; // [NEW]
+import ClientsList from './pages/clients/ClientsList'; // [NEW]
+import ClientForm from './pages/clients/ClientForm'; // [NEW]
+import BotDashboard from './pages/marketing/BotDashboard'; // [NEW]
 import PrivateRoute from './components/PrivateRoute';
 import { useAuth } from './contexts/AuthContext';
+// ...
+          <SidebarItem icon={<LayoutDashboard size={20} />} label="Dashboard" to="/" />
+          <SidebarItem icon={<Users size={20} />} label="Clientes" to="/customers" /> {/* [NEW] */ }
+// ...
+<Route path="/marketing/templates" element={<MessageTemplates />} /> {/* [NEW] Templates */ }
+<Route path="/customers" element={<ClientsList />} /> {/* [NEW] Clients Route */ }
+<Route path="/admin" element={<AdminUsers />} />
 import api from './api';
+import {
+  BarChart3, PenTool // [NEW] Icons
+} from 'lucide-react';
 
-const Dashboard = () => {
-  const [metrics, setMetrics] = useState({ total: 0, in: 0, out: 0 });
-  const [autoTestMetrics, setAutoTestMetrics] = useState({ generated: 0, failed: 0 });
-  const [whatsappStatus, setWhatsappStatus] = useState({ connected: false, provider: '' });
-  const [loading, setLoading] = useState(true);
+import Dashboard from './pages/Dashboard'; // [NEW]
 
-  useEffect(() => {
-    const fetchMetrics = async () => {
-      try {
-        const { data } = await api.get('/metrics');
-        setMetrics(data);
-      } catch (e) {
-        console.error('Erro ao carregar métricas:', e);
-      }
-    };
-
-    const fetchAutoTestMetrics = async () => {
-      try {
-        const { data } = await api.get('/autotest');
-        setAutoTestMetrics({ generated: data.generatedCount || 0, failed: data.failedCount || 0 });
-      } catch (e) {
-        console.error('Erro ao carregar métricas AutoTest:', e);
-      }
-    };
-
-    const fetchWhatsAppStatus = async () => {
-      try {
-        const { data } = await api.get('/whatsapp');
-        const instance = data.instance || data;
-        setWhatsappStatus({
-          connected: instance?.status === 'connected',
-          provider: instance?.provider || 'Nenhuma'
-        });
-      } catch (e) {
-        console.error('Erro ao carregar status WhatsApp:', e);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMetrics();
-    fetchAutoTestMetrics();
-    fetchWhatsAppStatus();
-
-    const interval = setInterval(() => {
-      fetchMetrics();
-      fetchAutoTestMetrics();
-      fetchWhatsAppStatus();
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <h1 className="text-4xl font-bold gradient-text mb-2">Seu Dashboard</h1>
-      <p className="text-slate-400 mb-6">Visão geral do sistema</p>
-
-      {/* WhatsApp Status */}
-      <div className="mb-6 glass p-6 rounded-3xl">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className={`w-4 h-4 rounded-full ${whatsappStatus.connected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
-            <div>
-              <p className="text-sm font-medium text-slate-400">Status WhatsApp</p>
-              <p className={`text-lg font-bold ${whatsappStatus.connected ? 'text-green-400' : 'text-red-400'}`}>
-                {whatsappStatus.connected ? 'Conectado' : 'Desconectado'}
-              </p>
-            </div>
-          </div>
-          {whatsappStatus.provider && (
-            <div className="text-right">
-              <p className="text-sm text-slate-500">Provedor</p>
-              <p className="text-sm font-medium text-white">{whatsappStatus.provider === 'evolution' ? 'Api Premium' : whatsappStatus.provider === 'uazapi' ? 'Api Secundaria' : whatsappStatus.provider}</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-pulse">
-          {[1, 2, 3, 4].map(i => <div key={i} className="h-32 glass rounded-3xl" />)}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatsCard label="Testes Gerados" value={autoTestMetrics.generated} color="text-blue-400" />
-          <StatsCard label="Falhas" value={autoTestMetrics.failed} color="text-red-400" />
-          <StatsCard label="Mensagens Recebidas" value={metrics.in || 0} />
-          <StatsCard label="Mensagens Enviadas" value={metrics.out || 0} />
-        </div>
-      )}
-    </div>
-  );
-};
-
-const StatsCard = ({ label, value, color = "text-white" }) => (
-  <div className="glass p-6 rounded-3xl">
-    <p className="text-slate-400 text-sm font-medium mb-1">{label}</p>
-    <div className="flex items-end gap-3">
-      <span className={`text-3xl font-bold ${color}`}>{value}</span>
-    </div>
-  </div>
-);
+// [REMOVED INLINE DASHBOARD AND STATSCARD]
 
 const Layout = ({ children }) => {
   const { user, logout } = useAuth();
+  // ... (rest of Layout)
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // [NEW] State for mobile menu
 
-  const SidebarItem = ({ icon, label, to }) => {
+  /* New Sidebar Group Component */
+  const SidebarGroup = ({ icon, label, children }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    return (
+      <div className="space-y-1">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className={`flex items-center justify-between p-3 w-full rounded-xl transition-all text-slate-400 hover:bg-white/5 ${isOpen ? 'bg-white/5 text-white' : ''}`}
+        >
+          <div className="flex items-center gap-3">
+            {icon}
+            <span>{label}</span>
+          </div>
+          <div className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+          </div>
+        </button>
+        {isOpen && children}
+      </div>
+    );
+  };
+
+  const SidebarItem = ({ icon, label, to, small }) => {
     const isActive = location.pathname === to;
     return (
       <button
@@ -130,7 +72,7 @@ const Layout = ({ children }) => {
           navigate(to);
           setMobileMenuOpen(false); // Close menu on mobile click
         }}
-        className={`flex items-center gap-3 p-3 w-full rounded-xl transition-all ${isActive ? 'bg-primary-500/20 text-primary-400 font-medium' : 'text-slate-400 hover:bg-white/5'
+        className={`flex items-center gap-3 ${small ? 'p-2 text-sm' : 'p-3'} w-full rounded-xl transition-all ${isActive ? 'bg-primary-500/20 text-primary-400 font-medium' : 'text-slate-400 hover:bg-white/5'
           }`}
       >
         {icon}
@@ -184,14 +126,34 @@ const Layout = ({ children }) => {
 
         <nav className="space-y-2">
           <SidebarItem icon={<LayoutDashboard size={20} />} label="Dashboard" to="/" />
-          <SidebarItem icon={<Settings size={20} />} label="Configurar BOT" to="/setup" />
-          <SidebarItem icon={<Smartphone size={20} />} label="WhatsApp" to="/instances" />
 
-          {/* [NEW] AutoTest Sidebar Item */}
-          <SidebarItem icon={<FileText size={20} />} label="Teste Automático" to="/autotest" />
+          {/* Chatbot Group */}
+          <SidebarGroup icon={<MessageSquare size={20} />} label="Chatbot">
+            <div className="pl-4 space-y-1 mt-1 border-l border-white/10 ml-3">
+              <SidebarItem icon={<LayoutDashboard size={18} />} label="Dashboard Bot" to="/" small />
+              <SidebarItem icon={<Settings size={18} />} label="Configurar" to="/setup" small />
+              <SidebarItem icon={<Smartphone size={18} />} label="WhatsApp" to="/instances" small />
+              <SidebarItem icon={<FileText size={18} />} label="Teste Auto" to="/autotest" small />
+              <SidebarItem icon={<CreditCard size={18} />} label="Renovar Bot" to="/subscription" small />
+            </div>
+          </SidebarGroup>
 
-          {/* [NEW] Subscription Sidebar Item */}
-          <SidebarItem icon={<CreditCard size={20} />} label="Renovar Assinatura" to="/subscription" />
+          <SidebarItem icon={<Server size={20} />} label="Integrações" to="/integrations" />
+
+          <SidebarGroup icon={<DollarSign size={20} />} label="Pagamentos">
+            <div className="pl-4 space-y-1 mt-1 border-l border-white/10 ml-3">
+              <SidebarItem icon={<Settings size={18} />} label="Configuração" to="/payments" small />
+              <SidebarItem icon={<BarChart3 size={18} />} label="Logs Financeiros" to="/financial/logs" small />
+              <SidebarItem icon={<CreditCard size={18} />} label="Métodos Manuais" to="/financial/methods" small />
+            </div>
+          </SidebarGroup>
+
+          <SidebarGroup icon={<MessageSquare size={20} />} label="Marketing">
+            <div className="pl-4 space-y-1 mt-1 border-l border-white/10 ml-3">
+              <SidebarItem icon={<PenTool size={18} />} label="Templates" to="/marketing/templates" small />
+              <SidebarItem icon={<Smartphone size={18} />} label="Disparador" to="#" small />
+            </div>
+          </SidebarGroup>
 
           <div className="pt-6 mt-6 border-t border-white/10 space-y-2">
             {user?.role === 'ADMIN' && (
@@ -213,21 +175,33 @@ const Layout = ({ children }) => {
   );
 };
 
+import Checkout from './pages/public/Checkout'; // [NEW]
+
 const App = () => {
   return (
     <div className="min-h-screen">
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/pay/:id" element={<Checkout />} /> {/* [NEW] Public */}
         <Route path="/*" element={
           <PrivateRoute>
             <Layout>
               <Routes>
                 <Route path="/" element={<Dashboard />} />
-                <Route path="/setup" element={<SetupWizard />} />
+                <Route path="/setup" element={<BotDashboard />} /> {/* [UPDATED] */}
                 <Route path="/instances" element={<Instances />} />
                 <Route path="/autotest" element={<AutoTest />} /> {/* [NEW] Route */}
                 <Route path="/subscription" element={<Subscription />} /> {/* [NEW] Subscription Route */}
+                <Route path="/integrations" element={<Integrations />} /> {/* [NEW] Integrations Route */}
+                <Route path="/payments" element={<PaymentSettings />} /> {/* [NEW] Payment Dashboard */}
+                <Route path="/payments/ciabra" element={<CiabraConfig />} /> {/* [NEW] Ciabra Config */}
+                <Route path="/financial/logs" element={<PaymentLogs />} /> {/* [NEW] Logs */}
+                <Route path="/financial/methods" element={<ManualMethods />} /> {/* [NEW] Manual Methods */}
+                <Route path="/marketing/templates" element={<MessageTemplates />} /> {/* [NEW] Templates */}
+                <Route path="/customers" element={<ClientsList />} />
+                <Route path="/customers/new" element={<ClientForm />} /> {/* [NEW] */}
+                <Route path="/customers/edit/:id" element={<ClientForm />} /> {/* [NEW] */}
                 <Route path="/admin" element={<AdminUsers />} />
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>
