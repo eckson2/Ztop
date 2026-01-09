@@ -26,7 +26,7 @@ services:
   backend:
     image: ghcr.io/eckson2/ztop-backend:latest
     # pull_policy: always # Swarm defaults to pulling if not found, but 'always' forces check
-    command: sh -c "npx prisma migrate deploy && npm start"
+    # pull_policy: always # Swarm defaults to pulling if not found, but 'always' forces check
     environment:
       - DATABASE_URL=postgresql://botsaas:botsaas_secure_pass@postgres:5432/ztop_db
       - JWT_SECRET=${JWT_SECRET:-change_me_in_prod}
