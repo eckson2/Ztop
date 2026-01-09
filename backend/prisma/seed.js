@@ -8,26 +8,27 @@ async function main() {
     const adminEmail = 'admin@ztop.dev.br';
     const adminPassword = 'adminpassword123'; // Change this in production
 
-    const existingAdmin = await prisma.user.findUnique({
-        where: { email: adminEmail }
+    const passwordHash = await bcrypt.hash(adminPassword, 10);
+
+    const user = await prisma.user.upsert({
+        where: { email: adminEmail },
+        update: {
+            passwordHash: passwordHash, // Force password reset
+            role: 'ADMIN',
+            status: 'active',
+            plan: 'enterprise'
+        },
+        create: {
+            name: 'Administrator',
+            email: adminEmail,
+            passwordHash: passwordHash,
+            role: 'ADMIN',
+            status: 'active',
+            plan: 'enterprise'
+        }
     });
 
-    if (!existingAdmin) {
-        const passwordHash = await bcrypt.hash(adminPassword, 10);
-        await prisma.user.create({
-            data: {
-                name: 'Administrator',
-                email: adminEmail,
-                passwordHash: passwordHash,
-                role: 'ADMIN',
-                status: 'active',
-                plan: 'enterprise'
-            }
-        });
-        console.log('✅ Admin user created: ' + adminEmail);
-    } else {
-        console.log('ℹ️ Admin user already exists.');
-    }
+    console.log('✅ Admin user created/updated: ' + adminEmail);
 
     console.log('✨ Seed finished.');
 }
