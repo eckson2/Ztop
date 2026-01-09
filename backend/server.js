@@ -42,7 +42,7 @@ app.use((req, res, next) => {
 });
 // Basic health check
 app.get('/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date() });
+    res.json({ status: 'ok-v2', timestamp: new Date() });
 });
 
 // Import Routes
