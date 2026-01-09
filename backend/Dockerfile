@@ -23,4 +23,5 @@ RUN npx prisma generate --schema=./prisma/schema.prisma
 
 EXPOSE 3000
 
+RUN chmod +x ./scripts/init.sh
 CMD ["./scripts/init.sh"]
