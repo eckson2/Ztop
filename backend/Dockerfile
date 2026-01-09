@@ -1,18 +1,18 @@
-FROM node:20-alpine
+FROM node:18-bullseye-slim
+
+# Install OpenSSL for Prisma
+RUN apt-get update -y && apt-get install -y openssl
 
 WORKDIR /app
 
-# Install OpenSSL for Prisma (Required for Alpine)
-RUN apk update && apk add --no-cache openssl libc6-compat
-
 COPY package*.json ./
-
 RUN npm install
 
 COPY . .
 
+# Generate Prisma Client
 RUN npx prisma generate
 
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+CMD ["npm", "start"]

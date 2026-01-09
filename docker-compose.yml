@@ -1,50 +1,92 @@
+version: '3.8'
+
 services:
+  # 1. Database
   postgres:
     image: postgres:15-alpine
     environment:
       - POSTGRES_USER=botsaas
-      - POSTGRES_PASSWORD=botsaas
-      - POSTGRES_DB=botsaas
+      - POSTGRES_PASSWORD=botsaas_secure_pass  # Change in Production env vars
+      - POSTGRES_DB=ztop_db
     volumes:
-      - botsaas_db:/var/lib/postgresql/data
+      - ztop_db_data:/var/lib/postgresql/data
     networks:
       - topnet
     deploy:
-      restart_policy:
-        condition: on-failure
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
 
-  backend:
-    image: node:18-bullseye
-    working_dir: /app
+  # 2. Redis (for Evolution & Queues)
+  redis:
+    image: redis:alpine
+    command: ["redis-server", "--appendonly", "yes"]
     volumes:
-      - ./backend:/app
-    command: sh -c "npm install && npx prisma db push && npx prisma db seed && npm start"
-    environment:
-      - DATABASE_URL=postgresql://botsaas:botsaas@postgres:5432/botsaas
-      - JWT_SECRET=${JWT_SECRET:-super_segredo_sistem_botsaas_2026}
-      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
-      - PORT=3000
-      - EVOLUTION_URL=${EVOLUTION_URL:-http://evolution:8080}
-      - EVOLUTION_API_KEY=${EVOLUTION_API_KEY:-516a61a35cc472dfb5e186c11a95bae9}
-      - UAZ_URL=${UAZ_URL:-https://gestormais.uazapi.com}
-      - UAZ_ADMIN_TOKEN=${UAZ_ADMIN_TOKEN}
-      - FRONTEND_URL=https://front.ztop.dev.br
+      - ztop_redis_data:/data
     networks:
       - topnet
-    dns:
-      - 8.8.8.8
-      - 8.8.4.4
+
+  # 3. Evolution API (WhatsApp)
+  evolution:
+    image: atendai/evolution-api:v2.1.1
+    environment:
+      - SERVER_URL=https://api.ztop.dev.br
+      - DOCKER_ENV=true
+      - DATABASE_ENABLED=false # Using Redis logic specifically or simple store
+      # Evolution v2 usually needs Postgres too, or just Redis for session. 
+      # Simplifying for v2 standard envs:
+      - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY:-516a61a35cc472dfb5e186c11a95bae9}
+      - DEL_INSTANCE=false
+      - CONFIG_SESSION_PHONE_CLIENT=TopTVS
+      # Store Type
+      - DATABASE_PROVIDER=postgresql
+      - DATABASE_CONNECTION_URI=postgresql://botsaas:botsaas_secure_pass@postgres:5432/ztop_db
+      - DATABASE_CLIENT_NAME=evolution_v2
+      # Redis
+      - CACHE_REDIS_ENABLED=true
+      - CACHE_REDIS_URI=redis://redis:6379/1
+    networks:
+      - topnet
     deploy:
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.dialogbot-back-secure.rule=Host(`back.ztop.dev.br`)"
-        - "traefik.http.routers.dialogbot-back-secure.entrypoints=websecure"
-        - "traefik.http.routers.dialogbot-back-secure.tls=true"
-        - "traefik.http.routers.dialogbot-back-secure.tls.certresolver=letsencryptresolver"
-        - "traefik.http.services.dialogbot-back.loadbalancer.server.port=3000"
+        - "traefik.http.routers.ztop-evo.rule=Host(`api.ztop.dev.br`)"
+        - "traefik.http.routers.ztop-evo.entrypoints=websecure"
+        - "traefik.http.routers.ztop-evo.tls.certresolver=letsencryptresolver"
+        - "traefik.http.services.ztop-evo.loadbalancer.server.port=8080"
 
+  # 4. Backend (Node.js)
+  backend:
+    image: ztop-backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: sh -c "npx prisma migrate deploy && npm start"
+    environment:
+      - DATABASE_URL=postgresql://botsaas:botsaas_secure_pass@postgres:5432/ztop_db
+      - JWT_SECRET=${JWT_SECRET:-change_me_in_prod}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-change_me_in_prod}
+      - FRONTEND_URL=https://ztop.dev.br
+      - EVOLUTION_URL=http://evolution:8080
+      - EVOLUTION_API_KEY=${EVOLUTION_API_KEY:-516a61a35cc472dfb5e186c11a95bae9}
+      - PORT=3000
+    networks:
+      - topnet
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.ztop-back.rule=Host(`back.ztop.dev.br`)"
+        - "traefik.http.routers.ztop-back.entrypoints=websecure"
+        - "traefik.http.routers.ztop-back.tls.certresolver=letsencryptresolver"
+        - "traefik.http.services.ztop-back.loadbalancer.server.port=3000"
+
+  # 5. Frontend (React + Nginx)
   frontend:
-    image: dialogbot_frontend:latest
+    image: ztop-frontend:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     environment:
       - VITE_API_URL=https://back.ztop.dev.br/api
     networks:
@@ -52,14 +94,14 @@ services:
     deploy:
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.dialogbot-front-secure.rule=Host(`front.ztop.dev.br`)"
-        - "traefik.http.routers.dialogbot-front-secure.entrypoints=websecure"
-        - "traefik.http.routers.dialogbot-front-secure.tls=true"
-        - "traefik.http.routers.dialogbot-front-secure.tls.certresolver=letsencryptresolver"
-        - "traefik.http.services.dialogbot-front.loadbalancer.server.port=80"
+        - "traefik.http.routers.ztop-front.rule=Host(`ztop.dev.br`)"
+        - "traefik.http.routers.ztop-front.entrypoints=websecure"
+        - "traefik.http.routers.ztop-front.tls.certresolver=letsencryptresolver"
+        - "traefik.http.services.ztop-front.loadbalancer.server.port=80"
 
 volumes:
-  botsaas_db:
+  ztop_db_data:
+  ztop_redis_data:
 
 networks:
   topnet:
