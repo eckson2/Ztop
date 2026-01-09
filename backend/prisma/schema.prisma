@@ -282,6 +282,7 @@ model Customer {
   status        String   @default("active") // active, inactive, expired
   
   apps          CustomerApp[]
+  sendingCategories SendingCategory[]
   transactions  FinancialTransaction[]
   
   createdAt     DateTime @default(now())
@@ -418,6 +419,8 @@ model MessageTemplate {
   name           String   // Identificador do template
   content        String   @db.Text
   type           String   @default("general") // renewal, billing, welcome, thanks
+  
+  sendingRules   SendingRule[]
   
   mediaUrl       String?  // Optional media attachment
   
