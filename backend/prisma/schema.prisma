@@ -30,7 +30,7 @@ model User {
   whatsappInstance WhatsAppInstance?
   autoTestConfig AutoTestConfig?
   sendingConfig  SendingConfig?
-  sendingCategories SendingCategory[] // [NEW]
+  sendingCategories SendingCategory[]
   chatSessions   ChatSession[]
   messageLogs    MessageLog[]
 
