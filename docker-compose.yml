@@ -18,43 +18,9 @@ services:
       placement:
         constraints: [node.role == manager]
 
-  # 2. Redis (for Evolution & Queues)
-  redis:
-    image: redis:alpine
-    command: ["redis-server", "--appendonly", "yes"]
-    volumes:
-      - ztop_redis_data:/data
-    networks:
-      - topnet
+  # 2. Redis - REMOVED (Evolution is external)
+  # 3. Evolution API - REMOVED (Managed externally)
 
-  # 3. Evolution API (WhatsApp)
-  evolution:
-    image: atendai/evolution-api:v2.1.1
-    environment:
-      - SERVER_URL=https://api.ztop.dev.br
-      - DOCKER_ENV=true
-      - DATABASE_ENABLED=false # Using Redis logic specifically or simple store
-      # Evolution v2 usually needs Postgres too, or just Redis for session. 
-      # Simplifying for v2 standard envs:
-      - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY:-516a61a35cc472dfb5e186c11a95bae9}
-      - DEL_INSTANCE=false
-      - CONFIG_SESSION_PHONE_CLIENT=TopTVS
-      # Store Type
-      - DATABASE_PROVIDER=postgresql
-      - DATABASE_CONNECTION_URI=postgresql://botsaas:botsaas_secure_pass@postgres:5432/ztop_db
-      - DATABASE_CLIENT_NAME=evolution_v2
-      # Redis
-      - CACHE_REDIS_ENABLED=true
-      - CACHE_REDIS_URI=redis://redis:6379/1
-    networks:
-      - topnet
-    deploy:
-      labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.ztop-evo.rule=Host(`api.ztop.dev.br`)"
-        - "traefik.http.routers.ztop-evo.entrypoints=websecure"
-        - "traefik.http.routers.ztop-evo.tls.certresolver=letsencryptresolver"
-        - "traefik.http.services.ztop-evo.loadbalancer.server.port=8080"
 
   # 4. Backend (Node.js)
   backend:
@@ -101,7 +67,6 @@ services:
 
 volumes:
   ztop_db_data:
-  ztop_redis_data:
 
 networks:
   topnet:
