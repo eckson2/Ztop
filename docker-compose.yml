@@ -25,6 +25,7 @@ services:
   # 4. Backend (Node.js)
   backend:
     image: ghcr.io/eckson2/ztop-backend:latest
+    # pull_policy: always # Swarm defaults to pulling if not found, but 'always' forces check
     command: sh -c "npx prisma migrate deploy && npm start"
     environment:
       - DATABASE_URL=postgresql://botsaas:botsaas_secure_pass@postgres:5432/ztop_db
@@ -37,6 +38,10 @@ services:
     networks:
       - topnet
     deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager] # Force on manager to avoid networking issues if any
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.ztop-back.rule=Host(`back.ztop.dev.br`)"
@@ -52,6 +57,10 @@ services:
     networks:
       - topnet
     deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.ztop-front.rule=Host(`ztop.dev.br`)"
