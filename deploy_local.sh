@@ -8,13 +8,14 @@ echo "📥 Pulling latest code..."
 git pull origin main
 
 # 2. Build Backend
-echo "🔨 Building Backend (Local)..."
-docker build -t ztop-backend:local ./backend
+echo "🔨 Building Backend (Local NO-CACHE)..."
+# Force NO CACHE to ensure fresh code
+docker build --no-cache -t ztop-backend:local ./backend
 
 # 3. Build Frontend
-echo "🔨 Building Frontend (Local)..."
+echo "🔨 Building Frontend (Local NO-CACHE)..."
 # Ensure VITE_API_URL is passed. Adjust domain if needed.
-docker build --build-arg VITE_API_URL=https://back.ztop.dev.br/api -t ztop-frontend:local ./frontend
+docker build --no-cache --build-arg VITE_API_URL=https://back.ztop.dev.br/api -t ztop-frontend:local ./frontend
 
 # 4. Deploy Stack
 echo "🚀 Deploying Stack..."
