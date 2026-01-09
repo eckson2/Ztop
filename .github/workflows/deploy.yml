@@ -39,5 +39,4 @@ jobs:
           context: ./frontend
           push: true
           tags: ghcr.io/eckson2/ztop-frontend:latest
-          build-args: |
-             VITE_API_URL=https://back.ztop.dev.br/api
+          build-args: VITE_API_URL=https://back.ztop.dev.br/api

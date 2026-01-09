@@ -1,4 +1,5 @@
 import React from 'react'
+console.log('ZTop Frontend starting...'); // Debug startup
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
