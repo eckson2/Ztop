@@ -1,7 +1,7 @@
-FROM node:18-alpine
+FROM node:18-slim
 
-ENV APP_VERSION=v5
-RUN apk add --no-cache openssl
+ENV APP_VERSION=v6
+RUN apt-get update -y && apt-get install -y openssl ca-certificates
 
 WORKDIR /app
 
