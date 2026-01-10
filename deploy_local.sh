@@ -10,12 +10,12 @@ git pull origin main
 # 2. Build Backend
 echo "🔨 Building Backend (Local NO-CACHE)..."
 # Force NO CACHE to ensure fresh code
-docker build --no-cache -t ztop-backend:local ./backend
+docker build --no-cache -t ztop-backend:v6-local ./backend
 
 # 3. Build Frontend
 echo "🔨 Building Frontend (Local NO-CACHE)..."
 # Ensure VITE_API_URL is passed. Adjust domain if needed.
-docker build --no-cache --build-arg VITE_API_URL=https://back.ztop.dev.br/api -t ztop-frontend:local ./frontend
+docker build --no-cache --build-arg VITE_API_URL=https://back.ztop.dev.br/api -t ztop-frontend:v6-local ./frontend
 
 # 4. Deploy Stack
 echo "🚀 Deploying Stack..."
