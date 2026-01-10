@@ -42,7 +42,7 @@ services:
         constraints: [node.role == manager] # Force on manager to avoid networking issues if any
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.ztop-back.rule=Host(`backend.ztop.dev.br`)"
+        - "traefik.http.routers.ztop-back.rule=Host(`b.ztop.dev.br`)"
         - "traefik.http.routers.ztop-back.entrypoints=websecure"
         - "traefik.http.routers.ztop-back.tls.certresolver=letsencryptresolver"
         - "traefik.http.services.ztop-back.loadbalancer.server.port=3000"
@@ -59,7 +59,7 @@ services:
   frontend:
     image: ztop-frontend:v7-local
     environment:
-      - VITE_API_URL=https://backend.ztop.dev.br/api
+      - VITE_API_URL=https://b.ztop.dev.br/api
     networks:
       - topnet
     deploy:
