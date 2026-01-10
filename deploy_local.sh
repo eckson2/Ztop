@@ -17,7 +17,7 @@ docker build --no-cache -t ztop-backend:v7-local ./backend
 echo "🔨 Building Frontend (v7-local)..."
 docker image rm ztop-frontend:v7-local || true
 # Ensure VITE_API_URL is passed. Adjust domain if needed.
-docker build --no-cache --build-arg VITE_API_URL=https://back.ztop.dev.br/api -t ztop-frontend:v7-local ./frontend
+docker build --no-cache --build-arg VITE_API_URL=https://backend.ztop.dev.br/api -t ztop-frontend:v7-local ./frontend
 
 # 4. Deploy Stack
 echo "🚀 Deploying Stack..."
