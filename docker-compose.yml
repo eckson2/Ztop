@@ -58,7 +58,6 @@ services:
   # 5. Frontend (React + Nginx)
   frontend:
     image: ztop-frontend:local
-    pull_policy: never
     environment:
       - VITE_API_URL=https://back.ztop.dev.br/api
     networks:
