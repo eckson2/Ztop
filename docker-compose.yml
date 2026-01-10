@@ -24,7 +24,7 @@ services:
 
   # 4. Backend (Node.js)
   backend:
-    image: ztop-backend:local
+    image: ztop-backend:v6-local
     environment:
       - DATABASE_URL=postgresql://botsaas:botsaas_secure_pass@postgres:5432/ztop_db
       - JWT_SECRET=${JWT_SECRET:-change_me_in_prod}
@@ -57,7 +57,7 @@ services:
 
   # 5. Frontend (React + Nginx)
   frontend:
-    image: ztop-frontend:local
+    image: ztop-frontend:v6-local
     environment:
       - VITE_API_URL=https://back.ztop.dev.br/api
     networks:
