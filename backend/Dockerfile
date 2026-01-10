@@ -1,6 +1,7 @@
 FROM node:18-alpine
 
-ENV APP_VERSION=v4
+ENV APP_VERSION=v5
+RUN apk add --no-cache openssl
 
 WORKDIR /app
 
