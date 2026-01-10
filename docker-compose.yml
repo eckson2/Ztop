@@ -25,7 +25,6 @@ services:
   # 4. Backend (Node.js)
   backend:
     image: ztop-backend:local
-    pull_policy: never
     environment:
       - DATABASE_URL=postgresql://botsaas:botsaas_secure_pass@postgres:5432/ztop_db
       - JWT_SECRET=${JWT_SECRET:-change_me_in_prod}
